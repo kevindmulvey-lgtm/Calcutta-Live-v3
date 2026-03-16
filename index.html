@@ -386,14 +386,52 @@ function App() {
     if (allRatios.length >= 3) {
       roomTemp = allRatios.reduce((a, b) => a + b, 0) / allRatios.length;
     }
+    // How many actual 1/2-seed sales have been recorded yet?
+    const premiumSeedSales = (seedSales[1]?.ratios.length || 0) + (seedSales[2]?.ratios.length || 0);
+
+    // Phase 1 room temp: derived only from seeds 3-16 sales
+    // This isolates the behavioral signal from the tier actually being auctioned
+    const phase1Ratios = Object.entries(seedSales)
+      .filter(([s]) => parseInt(s) >= 3)
+      .flatMap(([, d]) => d.ratios);
+    const phase1Temp = phase1Ratios.length >= 3
+      ? phase1Ratios.reduce((a, b) => a + b, 0) / phase1Ratios.length
+      : roomTemp;
+
     const getAdjustedMultiplier = (seed) => {
+      // Direct same-seed sales: always most accurate, use immediately
       if (seedSales[seed]?.ratios.length > 0) {
         const r = seedSales[seed].ratios;
         return r.reduce((a,b) => a+b, 0) / r.length;
       }
-      const highVarianceSeeds = new Set([1, 2, 3, 7, 8]);
-      const roomWeight = highVarianceSeeds.has(seed) ? 0.7 : 0.5;
-      return roomTemp * roomWeight + 1.0 * (1 - roomWeight);
+
+      if (seed <= 2) {
+        // ── 1 and 2-seeds: two-phase aware pricing ──────────────────────
+        // Phase 1 (no premium sales yet): lean heavily on historical baseline.
+        // Cross-tier signal from 3-16 seeds is directional but not precise —
+        // 1/2-seed bidding psychology is a fundamentally different tier.
+        // Use it lightly (25%) so the historical anchor dominates.
+        //
+        // Phase 2 (premium sales recording): trust live signal progressively
+        // more as same-tier data accumulates.
+        if (premiumSeedSales === 0) {
+          // Pure Phase 1: 25% cross-tier signal, 75% historical baseline
+          return phase1Temp * 0.25 + 1.0 * 0.75;
+        } else if (premiumSeedSales <= 3) {
+          // Early Phase 2: blend shifts toward live as more premium seeds sell
+          // Interpolates from 0.35 → 0.60 weight on live signal
+          const liveWeight = 0.35 + (premiumSeedSales / 8) * 0.25;
+          return roomTemp * liveWeight + 1.0 * (1 - liveWeight);
+        } else {
+          // Late Phase 2: enough same-tier data, trust live signal strongly
+          return roomTemp * 0.70 + 1.0 * 0.30;
+        }
+      }
+
+      // Seeds 3-16: use phase1Temp (same-tier signal), standard blending
+      // 3-seeds slightly higher variance than mid-seeds
+      const roomWeight = seed === 3 ? 0.55 : 0.50;
+      return phase1Temp * roomWeight + 1.0 * (1 - roomWeight);
     };
     return TEAMS
       .filter(t => !soldNames.has(t.team))
@@ -850,10 +888,16 @@ function App() {
             const temp = allRatios.length >= 3 ? (allRatios.reduce((a,b)=>a+b,0)/allRatios.length) : 1.0;
             const tempLabel = temp > 1.12 ? "🔥 HOT" : temp < 0.9 ? "🧊 COLD" : "😐 NORMAL";
             const tempColor = temp > 1.12 ? "#ef4444" : temp < 0.9 ? "#60a5fa" : "#94a3b8";
+            const premiumSold = sold.filter(s => s.team.seed <= 2).length;
+            const phase1Only = premiumSold === 0;
             return (
-              <div style={{ fontSize:11,padding:"6px 12px",background:"#0a0f1a",borderRadius:5,border:"1px solid #1e3a5f",marginBottom:10,display:"flex",gap:16,alignItems:"center" }}>
+              <div style={{ fontSize:11,padding:"6px 12px",background:"#0a0f1a",borderRadius:5,border:"1px solid #1e3a5f",marginBottom:10,display:"flex",gap:16,alignItems:"center",flexWrap:"wrap" }}>
                 <span style={{ color:"#3b82f6" }}>⚡ Dynamic pricing active — {sold.length} sales recorded, pot ~${pot.toLocaleString()}</span>
-                <span style={{ color:tempColor,fontWeight:800 }}>Room temp: {tempLabel} ({(temp*100).toFixed(0)}% of avg)</span>
+                <span style={{ color:tempColor,fontWeight:800 }}>Phase 1 room temp: {tempLabel} ({(temp*100).toFixed(0)}% of avg)</span>
+                {phase1Only
+                  ? <span style={{ color:"#f59e0b",fontSize:10 }}>1 &amp; 2-seed prices anchored 75% to historical baseline until Phase 2 begins</span>
+                  : <span style={{ color:"#4ade80",fontSize:10 }}>Phase 2 active — {premiumSold} premium seed{premiumSold>1?"s":""} sold, live signal weighted {Math.min(70,Math.round((0.35+(premiumSold/8)*0.25)*100))}%</span>
+                }
                 {allRatios.length < 2 && <span style={{ color:"#4b5563" }}>Need 2+ sales to activate price adjustments</span>}
               </div>
             );
