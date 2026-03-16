@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CALCUTTA/26 — Auction Intelligence</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #070711; }
+    #root { min-height: 100vh; }
+  </style>
+
+  <!-- React -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <!-- Babel (transpiles JSX in-browser) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, onValue, push, remove, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    window.FirebaseApp      = { initializeApp };
+    window.FirebaseDatabase = { getDatabase, ref, onValue, push, remove, set };
+    window._firebaseReady   = true;
+    document.dispatchEvent(new Event("firebase-ready"));
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" data-presets="react">
+// Globals from CDN
+const { useState, useEffect, useMemo, useRef } = React;
+const { initializeApp } = FirebaseApp;
+const { getDatabase, ref, onValue, push, remove, set } = FirebaseDatabase;
+
+// ─── FIREBASE CONFIG ──────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyCbKZCfadX2IVa1yj9k2L-UiiHvx24W4Ow",
+  authDomain: "calcutta-2026-d4212.firebaseapp.com",
+  databaseURL: "https://calcutta-2026-d4212-default-rtdb.firebaseio.com",
+  projectId: "calcutta-2026-d4212",
+  storageBucket: "calcutta-2026-d4212.firebasestorage.app",
+  messagingSenderId: "568927538172",
+  appId: "1:568927538172:web:fe996e4c3e1d115bcfc079",
+  measurementId: "G-D5WTQXS8TT"
+};
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getDatabase(firebaseApp);
+
+
+// ─── REAL 2026 TOURNAMENT DATA (from calcutta_analysis.md) ────────────────
+const POT_BASE = 18900;
+
+const SEED_HIST = {
+  1:  { avg:1046, min:735,  max:1500, roi:58.4,  roiLabel:"+58.4%",  verdict:"BUY",       maxBidCeil:1200 },
+  2:  { avg:781,  min:650,  max:950,  roi:-20.0, roiLabel:"-20.0%",  verdict:"OVERPRICED",maxBidCeil:750  },
+  3:  { avg:527,  min:420,  max:630,  roi:-24.2, roiLabel:"-24.2%",  verdict:"OVERPRICED",maxBidCeil:500  },
+  4:  { avg:443,  min:300,  max:560,  roi:12.1,  roiLabel:"+12.1%",  verdict:"BUY",       maxBidCeil:450  },
+  5:  { avg:281,  min:190,  max:355,  roi:-36.6, roiLabel:"-36.6%",  verdict:"AVOID",     maxBidCeil:260  },
+  6:  { avg:245,  min:175,  max:300,  roi:16.0,  roiLabel:"+16.0%",  verdict:"BUY",       maxBidCeil:240  },
+  7:  { avg:211,  min:170,  max:240,  roi:-45.9, roiLabel:"-45.9%",  verdict:"AVOID",     maxBidCeil:170  },
+  8:  { avg:184,  min:135,  max:210,  roi:-62.3, roiLabel:"-62.3%",  verdict:"AVOID",     maxBidCeil:130  },
+  9:  { avg:147,  min:85,   max:195,  roi:-22.5, roiLabel:"-22.5%",  verdict:"FAIR",      maxBidCeil:130  },
+  10: { avg:151,  min:105,  max:180,  roi:2.6,   roiLabel:"+2.6%",   verdict:"FAIR",      maxBidCeil:140  },
+  11: { avg:161,  min:95,   max:225,  roi:44.7,  roiLabel:"+44.7%",  verdict:"GREAT BUY", maxBidCeil:180  },
+  12: { avg:137,  min:90,   max:200,  roi:-33.0, roiLabel:"-33.0%",  verdict:"AVOID",     maxBidCeil:120  },
+  13: { avg:91,   min:60,   max:110,  roi:-75.5, roiLabel:"-75.5%",  verdict:"AVOID",     maxBidCeil:80   },
+  14: { avg:66,   min:55,   max:75,   roi:0.6,   roiLabel:"+0.6%",   verdict:"FAIR",      maxBidCeil:60   },
+  15: { avg:52,   min:40,   max:70,   roi:-100,  roiLabel:"-100%",   verdict:"AVOID",     maxBidCeil:50   },
+  16: { avg:57,   min:45,   max:65,   roi:61.2,  roiLabel:"+61.2%",  verdict:"GREAT BUY", maxBidCeil:55   },
+};
+
+// Priority / strategy tags
+const TAGS = {
+  PRIORITY:"PRIORITY", VALUE:"VALUE", TRAP:"TRAP", AVOID:"AVOID", BLOWOUT:"BLOWOUT", LOTTERY:"LOTTERY"
+};
+
+// All 68 teams with real data from the analysis
+// Fields: seed, team, region, r1,r2,s16,e8,f4,champ (cumulative win probs),
+//         upsetEV, blowoutEV, expPayout, priceLow, priceHigh, rating, maxBid, walkAway,
+//         notes, tag, playIn, bluBlood
+const TEAMS = [
+  // ── 1-SEEDS ──────────────────────────────────────────────────────────────
+  { seed:1,  team:"Duke",            region:"East",    r1:.99, r2:.88, s16:.68, e8:.52, f4:.38, champ:.22, upsetEV:0,  blowoutEV:0,  expPayout:1420, priceLow:1150, priceHigh:1400, rating:"BUY",      maxBid:1200, walkAway:1300, tag:TAGS.VALUE,    playIn:false, bluBlood:true,
+    notes:"KenPom #1 overall, Cameron Boozer. Brand premium will push $1,300+. Brutal East region (UConn, MSU, Kansas). Walk away above $1,200." },
+  { seed:1,  team:"Michigan",        region:"Midwest", r1:.99, r2:.90, s16:.72, e8:.55, f4:.40, champ:.23, upsetEV:0,  blowoutEV:0,  expPayout:1480, priceLow:1100, priceHigh:1350, rating:"GREAT BUY",maxBid:1200, walkAway:1250, tag:TAGS.PRIORITY, playIn:false, bluBlood:true,
+    notes:"#1 PRIORITY. KenPom #2, Def #1. Softest 1-seed region. Slightly cheaper than Duke. If under $1,150, best pick in the auction." },
+  { seed:1,  team:"Arizona",         region:"West",    r1:.99, r2:.88, s16:.70, e8:.54, f4:.38, champ:.20, upsetEV:0,  blowoutEV:0,  expPayout:1390, priceLow:1050, priceHigh:1300, rating:"BUY",      maxBid:1150, walkAway:1200, tag:TAGS.VALUE,    playIn:false, bluBlood:false,
+    notes:"KenPom #3, 30-2, Big 12 champ. Steady but no Sweet 16 in a decade. Fair value $1,050–$1,150. Backup if Michigan and Florida go too high." },
+  { seed:1,  team:"Florida",         region:"South",   r1:.98, r2:.84, s16:.62, e8:.42, f4:.28, champ:.14, upsetEV:0,  blowoutEV:0,  expPayout:1060, priceLow:900,  priceHigh:1100, rating:"GREAT BUY",maxBid:1050, walkAway:1100, tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
+    notes:"PRIORITY. Defending champion but SEC semi loss to Vandy deflates buzz. Cheapest 1-seed. At $900–$1,000 this is the highest-ROI 1-seed purchase." },
+
+  // ── 2-SEEDS ──────────────────────────────────────────────────────────────
+  { seed:2,  team:"Houston",         region:"South",   r1:.97, r2:.80, s16:.58, e8:.40, f4:.25, champ:.12, upsetEV:0,  blowoutEV:0,  expPayout:940,  priceLow:800,  priceHigh:1000, rating:"OVERPRICED",maxBid:750,  walkAway:850,  tag:TAGS.TRAP,     playIn:false, bluBlood:false,
+    notes:"TRAP #2. Room treats as a 1-seed ($900+). Big 12 bias. -20% 2-seed ROI. In Florida's region. Let someone else overpay. Only consider under $750." },
+  { seed:2,  team:"UConn",           region:"East",    r1:.96, r2:.76, s16:.48, e8:.32, f4:.18, champ:.09, upsetEV:0,  blowoutEV:0,  expPayout:730,  priceLow:750,  priceHigh:950,  rating:"OVERPRICED",maxBid:700,  walkAway:800,  tag:TAGS.TRAP,     playIn:false, bluBlood:true,
+    notes:"TRAP. 2023/2024 champion brand. KenPom #12. Lost Big East final. Brutal East region with Duke. Sells $800+ on nostalgia. Under $700 only." },
+  { seed:2,  team:"Iowa State",      region:"Midwest", r1:.96, r2:.78, s16:.52, e8:.34, f4:.18, champ:.08, upsetEV:0,  blowoutEV:0,  expPayout:720,  priceLow:700,  priceHigh:850,  rating:"FAIR",      maxBid:750,  walkAway:850,  tag:TAGS.LOTTERY,  playIn:false, bluBlood:false,
+    notes:"Most fairly priced 2-seed. KenPom #6, Def #4. Less brand inflation. If available $700–$750, the only 2-seed worth considering." },
+  { seed:2,  team:"Purdue",          region:"West",    r1:.95, r2:.74, s16:.48, e8:.30, f4:.16, champ:.07, upsetEV:0,  blowoutEV:0,  expPayout:650,  priceLow:650,  priceHigh:825,  rating:"FAIR",      maxBid:700,  walkAway:825,  tag:TAGS.LOTTERY,  playIn:false, bluBlood:false,
+    notes:"Big Ten tourney champ, KenPom #8, Off #2. But Def #36 = wild variance. At $650–$700, acceptable opportunistic buy." },
+
+  // ── 3-SEEDS ──────────────────────────────────────────────────────────────
+  { seed:3,  team:"Michigan State",  region:"East",    r1:.95, r2:.68, s16:.42, e8:.28, f4:.15, champ:.07, upsetEV:0,  blowoutEV:0,  expPayout:580,  priceLow:525,  priceHigh:625,  rating:"FAIR",      maxBid:500,  walkAway:550,  tag:TAGS.AVOID,    playIn:false, bluBlood:true,
+    notes:"OVERPRICED #10. KenPom #9 but in Duke's brutal East region. Big Ten bias inflates -24.2% 3-seed ROI. Walk away above $550." },
+  { seed:3,  team:"Illinois",        region:"South",   r1:.94, r2:.72, s16:.48, e8:.30, f4:.16, champ:.08, upsetEV:0,  blowoutEV:0,  expPayout:630,  priceLow:500,  priceHigh:600,  rating:"BUY",       maxBid:550,  walkAway:580,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
+    notes:"PRIORITY #5. KenPom #7, #1 offense in country. +1900 odds. Best 3-seed value. R2 opponent likely UNC (missing Caleb Wilson). At $500–$540, breaks the -24.2% trend." },
+  { seed:3,  team:"Virginia",        region:"Midwest", r1:.94, r2:.68, s16:.42, e8:.26, f4:.12, champ:.05, upsetEV:0,  blowoutEV:0,  expPayout:500,  priceLow:475,  priceHigh:575,  rating:"FAIR",      maxBid:500,  walkAway:575,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"KenPom #13, Def #16. Lost ACC final to Duke. Solid floor, limited ceiling. Fair at $475–$525." },
+  { seed:3,  team:"Gonzaga",         region:"West",    r1:.94, r2:.70, s16:.44, e8:.26, f4:.14, champ:.06, upsetEV:0,  blowoutEV:0,  expPayout:540,  priceLow:500,  priceHigh:600,  rating:"FAIR",      maxBid:500,  walkAway:580,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"KenPom #10, March reputation. West region path through Arizona is tough. Standard 3-seed pricing. Room will overpay on brand." },
+
+  // ── 4-SEEDS ──────────────────────────────────────────────────────────────
+  { seed:4,  team:"Kansas",          region:"East",    r1:.92, r2:.60, s16:.32, e8:.18, f4:.08, champ:.03, upsetEV:0,  blowoutEV:0,  expPayout:400,  priceLow:475,  priceHigh:575,  rating:"OVERPRICED",maxBid:400,  walkAway:450,  tag:TAGS.TRAP,     playIn:false, bluBlood:true,
+    notes:"TRAP. KenPom #21 mediocre for a 4-seed. Brand premium adds $100+. In Duke's brutal East region. Hard avoid above $450." },
+  { seed:4,  team:"Alabama",         region:"Midwest", r1:.92, r2:.62, s16:.35, e8:.20, f4:.09, champ:.04, upsetEV:0,  blowoutEV:0,  expPayout:430,  priceLow:425,  priceHigh:525,  rating:"FAIR",      maxBid:450,  walkAway:525,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"Off #3 but Def #67 = extreme variance. KenPom #17. Room may overpay on name. Fair at $425–$450." },
+  { seed:4,  team:"Nebraska",        region:"South",   r1:.90, r2:.58, s16:.30, e8:.16, f4:.07, champ:.02, upsetEV:0,  blowoutEV:0,  expPayout:350,  priceLow:350,  priceHigh:450,  rating:"BUY",       maxBid:400,  walkAway:430,  tag:TAGS.VALUE,    playIn:false, bluBlood:false,
+    notes:"VALUE. First tournament appearance = no brand premium. KenPom #14, Def #7. +12.1% 4-seed ROI. Target $350–$400." },
+  { seed:4,  team:"Arkansas",        region:"West",    r1:.91, r2:.60, s16:.32, e8:.18, f4:.08, champ:.03, upsetEV:0,  blowoutEV:0,  expPayout:390,  priceLow:400,  priceHigh:500,  rating:"FAIR",       maxBid:450,  walkAway:520,  tag:TAGS.VALUE,    playIn:false, bluBlood:false,
+    notes:"SEC tourney champ, 10–20% hot streak premium. KenPom #18, great offense. At $400–$450, acceptable backup." },
+
+  // ── 5-SEEDS ──────────────────────────────────────────────────────────────
+  { seed:5,  team:"St. John's",      region:"East",    r1:.88, r2:.50, s16:.24, e8:.12, f4:.05, champ:.02, upsetEV:0,  blowoutEV:0,  expPayout:310,  priceLow:275,  priceHigh:350,  rating:"FAIR",      maxBid:265,  walkAway:300,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"Big East tourney champ = narrative premium. KenPom #16, Def #12. But -36.6% 5-seed ROI. Walk away above $300." },
+  { seed:5,  team:"Vanderbilt",      region:"South",   r1:.88, r2:.55, s16:.28, e8:.15, f4:.08, champ:.03, upsetEV:0,  blowoutEV:0,  expPayout:370,  priceLow:260,  priceHigh:330,  rating:"GREAT BUY", maxBid:300,  walkAway:320,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
+    notes:"PRIORITY #2. THE value team. KenPom #11, SEC tourney champ (beat Florida!), Off #7. Plays like a 3, priced as a 5. Room won't adjust for metrics. Target $260–$280." },
+  { seed:5,  team:"Wisconsin",       region:"West",    r1:.86, r2:.48, s16:.22, e8:.10, f4:.04, champ:.015,upsetEV:0,  blowoutEV:0,  expPayout:270,  priceLow:250,  priceHigh:320,  rating:"FAIR",      maxBid:255,  walkAway:310,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"KenPom #22, Off #11. In Arizona's region. Standard 5-seed. Room inflation risk." },
+  { seed:5,  team:"Texas Tech",      region:"Midwest", r1:.87, r2:.50, s16:.24, e8:.12, f4:.05, champ:.02, upsetEV:0,  blowoutEV:0,  expPayout:300,  priceLow:260,  priceHigh:330,  rating:"FAIR",      maxBid:260,  walkAway:310,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"KenPom #20, Off #12. Nice profile but 5-seed pricing makes marginal. -36.6% ROI." },
+
+  // ── 6-SEEDS ──────────────────────────────────────────────────────────────
+  { seed:6,  team:"Louisville",      region:"East",    r1:.84, r2:.42, s16:.18, e8:.08, f4:.03, champ:.01, upsetEV:0,  blowoutEV:0,  expPayout:250,  priceLow:240,  priceHigh:300,  rating:"BUY",       maxBid:260,  walkAway:275,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
+    notes:"PRIORITY #10. KenPom #19, balanced Off #20/Def #25. Second straight tourney = buzz but not overheated. Faces South Florida R1. +16% 6-seed ROI. Target $240–$260." },
+  { seed:6,  team:"North Carolina",  region:"South",   r1:.82, r2:.40, s16:.16, e8:.07, f4:.025,champ:.01, upsetEV:0,  blowoutEV:0,  expPayout:230,  priceLow:280,  priceHigh:360,  rating:"OVERPRICED",maxBid:200,  walkAway:220,  tag:TAGS.TRAP,     playIn:false, bluBlood:true,
+    notes:"TRAP #4. Star Caleb Wilson OUT (hand surgery). KenPom #29 without him. UNC brand = $300+ regardless. Walk away. Under $200 only." },
+  { seed:6,  team:"Tennessee",       region:"Midwest", r1:.83, r2:.42, s16:.18, e8:.08, f4:.03, champ:.01, upsetEV:0,  blowoutEV:0,  expPayout:250,  priceLow:230,  priceHigh:290,  rating:"BUY",       maxBid:260,  walkAway:275,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
+    notes:"PRIORITY #7. KenPom #15, Def #15. Quiet value. Flies under radar in Midwest room. Historical 6-seed ROI +16%. Target $230–$260." },
+  { seed:6,  team:"BYU",             region:"West",    r1:.82, r2:.40, s16:.16, e8:.07, f4:.025,champ:.01, upsetEV:0,  blowoutEV:0,  expPayout:230,  priceLow:220,  priceHigh:280,  rating:"FAIR",      maxBid:240,  walkAway:275,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"High-octane Off #10, but Def #57 = entertaining and volatile. Fair at $220–$260." },
+
+  // ── 7-SEEDS (AVOID TIER) ─────────────────────────────────────────────────
+  { seed:7,  team:"UCLA",            region:"East",    r1:.72, r2:.30, s16:.12, e8:.05, f4:.02, champ:.005,upsetEV:0,  blowoutEV:0,  expPayout:175,  priceLow:210,  priceHigh:260,  rating:"AVOID",     maxBid:180,  walkAway:200,  tag:TAGS.AVOID,    playIn:false, bluBlood:true,
+    notes:"AVOID. KenPom #27. Brand drives bidding above seed value. -45.9% 7-seed ROI. Walk away above $200." },
+  { seed:7,  team:"Saint Mary's",    region:"South",   r1:.70, r2:.28, s16:.11, e8:.04, f4:.015,champ:.005,upsetEV:0,  blowoutEV:0,  expPayout:165,  priceLow:190,  priceHigh:240,  rating:"AVOID",     maxBid:170,  walkAway:195,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"Standard 7-seed avoid. -45.9% seed ROI." },
+  { seed:7,  team:"Miami FL",        region:"West",    r1:.68, r2:.26, s16:.10, e8:.04, f4:.015,champ:.005,upsetEV:0,  blowoutEV:0,  expPayout:155,  priceLow:200,  priceHigh:250,  rating:"AVOID",     maxBid:170,  walkAway:195,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"Standard 7-seed avoid." },
+  { seed:7,  team:"Kentucky",        region:"Midwest", r1:.72, r2:.30, s16:.12, e8:.05, f4:.02, champ:.005,upsetEV:0,  blowoutEV:0,  expPayout:175,  priceLow:250,  priceHigh:330,  rating:"AVOID",     maxBid:175,  walkAway:195,  tag:TAGS.TRAP,     playIn:false, bluBlood:true,
+    notes:"TRAP #1. Most dangerous trap in pool. KenPom #28 mediocre. Room will bid $280–$330. -45.9% 7-seed ROI will crush you. Never above $175." },
+
+  // ── 8-SEEDS (WORST ROI TIER) ─────────────────────────────────────────────
+  { seed:8,  team:"Ohio State",      region:"East",    r1:.50, r2:.15, s16:.05, e8:.02, f4:.005,champ:.002,upsetEV:0,  blowoutEV:0,  expPayout:85,   priceLow:165,  priceHigh:210,  rating:"AVOID",     maxBid:130,  walkAway:160,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"AVOID. -62.3% 8-seed ROI. KenPom #26, Def #53. Big Ten bias in this room makes this a trap." },
+  { seed:8,  team:"Clemson",         region:"South",   r1:.48, r2:.14, s16:.04, e8:.015,f4:.005,champ:.002,upsetEV:0,  blowoutEV:0,  expPayout:80,   priceLow:155,  priceHigh:200,  rating:"AVOID",     maxBid:130,  walkAway:160,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"AVOID. -62.3% 8-seed ROI. Never touch 8-seeds." },
+  { seed:8,  team:"Villanova",       region:"West",    r1:.48, r2:.14, s16:.04, e8:.015,f4:.005,champ:.002,upsetEV:0,  blowoutEV:0,  expPayout:80,   priceLow:160,  priceHigh:205,  rating:"AVOID",     maxBid:130,  walkAway:160,  tag:TAGS.AVOID,    playIn:false, bluBlood:true,
+    notes:"AVOID. Brand premium on worst-ROI seed. Never touch 8-seeds." },
+  { seed:8,  team:"Georgia",         region:"Midwest", r1:.48, r2:.14, s16:.04, e8:.015,f4:.005,champ:.002,upsetEV:0,  blowoutEV:0,  expPayout:80,   priceLow:155,  priceHigh:200,  rating:"AVOID",     maxBid:130,  walkAway:160,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"AVOID. -62.3% 8-seed ROI. Zero exceptions for 8-seeds." },
+
+  // ── 9-SEEDS ──────────────────────────────────────────────────────────────
+  { seed:9,  team:"TCU",             region:"East",    r1:.50, r2:.16, s16:.05, e8:.02, f4:.005,champ:.002,upsetEV:0,  blowoutEV:0,  expPayout:90,   priceLow:130,  priceHigh:170,  rating:"FAIR",      maxBid:130,  walkAway:165,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"Standard 9-seed. -22.5% ROI. Fair at $130–$150." },
+  { seed:9,  team:"Iowa",            region:"South",   r1:.52, r2:.18, s16:.06, e8:.025,f4:.01, champ:.003,upsetEV:0,  blowoutEV:0,  expPayout:105,  priceLow:140,  priceHigh:180,  rating:"FAIR",      maxBid:130,  walkAway:165,  tag:TAGS.LOTTERY,  playIn:false, bluBlood:false,
+    notes:"R2 could face UNC without Caleb Wilson — interesting path. At $130–$150 with favorable draw." },
+  { seed:9,  team:"Utah State",      region:"West",    r1:.52, r2:.18, s16:.06, e8:.025,f4:.01, champ:.003,upsetEV:0,  blowoutEV:0,  expPayout:105,  priceLow:125,  priceHigh:160,  rating:"BUY",       maxBid:140,  walkAway:160,  tag:TAGS.VALUE,    playIn:false, bluBlood:false,
+    notes:"Best 9-seed. KenPom #30, Off #28. Faces Villanova (weaker 8-seed). At $125–$140, reasonable flier." },
+  { seed:9,  team:"St. Louis",       region:"Midwest", r1:.52, r2:.16, s16:.05, e8:.02, f4:.005,champ:.002,upsetEV:0,  blowoutEV:0,  expPayout:90,   priceLow:120,  priceHigh:155,  rating:"FAIR",      maxBid:130,  walkAway:155,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"Standard 9-seed. A-10." },
+
+  // ── 10-SEEDS ─────────────────────────────────────────────────────────────
+  { seed:10, team:"UCF",             region:"East",    r1:.42, r2:.14, s16:.04, e8:.015,f4:.005,champ:.001,upsetEV:15, blowoutEV:0,  expPayout:110,  priceLow:130,  priceHigh:165,  rating:"FAIR",      maxBid:140,  walkAway:165,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"Upset bonus potential vs Duke. Fair at $130–$150." },
+  { seed:10, team:"Texas A&M",       region:"South",   r1:.40, r2:.12, s16:.03, e8:.01, f4:.003,champ:.001,upsetEV:12, blowoutEV:0,  expPayout:95,   priceLow:130,  priceHigh:165,  rating:"FAIR",      maxBid:140,  walkAway:165,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"SEC. Standard 10-seed." },
+  { seed:10, team:"Missouri",        region:"West",    r1:.40, r2:.12, s16:.04, e8:.015,f4:.005,champ:.001,upsetEV:12, blowoutEV:0,  expPayout:100,  priceLow:130,  priceHigh:160,  rating:"FAIR",      maxBid:140,  walkAway:160,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"SEC. Standard 10-seed." },
+  { seed:10, team:"Santa Clara",     region:"Midwest", r1:.38, r2:.10, s16:.03, e8:.01, f4:.003,champ:.001,upsetEV:11, blowoutEV:0,  expPayout:85,   priceLow:120,  priceHigh:155,  rating:"FAIR",      maxBid:140,  walkAway:155,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"WCC. Low name recognition = potential value if under $120." },
+
+  // ── 11-SEEDS (PREMIUM VALUE TIER) ────────────────────────────────────────
+  { seed:11, team:"South Florida",   region:"East",    r1:.60, r2:.22, s16:.08, e8:.03, f4:.01, champ:.003,upsetEV:25, blowoutEV:0,  expPayout:155,  priceLow:140,  priceHigh:180,  rating:"GREAT BUY", maxBid:175,  walkAway:185,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
+    notes:"PRIORITY #4. American champ, momentum, faces Louisville R1. +44.7% 11-seed ROI. Must-buy at $140–$170." },
+  { seed:11, team:"VCU",             region:"South",   r1:.55, r2:.18, s16:.06, e8:.02, f4:.007,champ:.002,upsetEV:22, blowoutEV:0,  expPayout:130,  priceLow:130,  priceHigh:170,  rating:"GREAT BUY", maxBid:160,  walkAway:175,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
+    notes:"PRIORITY #6. A-10 champ, faces UNC missing Caleb Wilson. Genuine upset corridor. At $130–$160, excellent value." },
+  { seed:11, team:"Texas/NC State",  region:"West",    r1:.50, r2:.14, s16:.04, e8:.015,f4:.005,champ:.001,upsetEV:18, blowoutEV:0,  expPayout:100,  priceLow:110,  priceHigh:150,  rating:"BUY",       maxBid:155,  walkAway:165,  tag:TAGS.VALUE,    playIn:true,  bluBlood:false,
+    notes:"Play-in. NC State (2024 Final Four) is the better half. Fine lottery ticket at $100–$130." },
+  { seed:11, team:"SMU/Miami OH",    region:"Midwest", r1:.45, r2:.12, s16:.03, e8:.01, f4:.003,champ:.001,upsetEV:15, blowoutEV:0,  expPayout:85,   priceLow:100,  priceHigh:140,  rating:"BUY",       maxBid:140,  walkAway:150,  tag:TAGS.VALUE,    playIn:true,  bluBlood:false,
+    notes:"Play-in. Lower quality half. Fine at $100–$130 as lottery ticket in best value seed tier." },
+
+  // ── 12-SEEDS ─────────────────────────────────────────────────────────────
+  { seed:12, team:"Northern Iowa",   region:"East",    r1:.30, r2:.08, s16:.02, e8:.005,f4:.001,champ:0,   upsetEV:15, blowoutEV:0,  expPayout:85,   priceLow:110,  priceHigh:145,  rating:"FAIR",      maxBid:120,  walkAway:145,  tag:TAGS.LOTTERY,  playIn:false, bluBlood:false,
+    notes:"Faces St. John's — classic 12-over-5 setup. Most interesting 12-seed. -33% ROI, only buy under $110." },
+  { seed:12, team:"McNeese",         region:"South",   r1:.28, r2:.07, s16:.015,e8:.005,f4:.001,champ:0,   upsetEV:14, blowoutEV:0,  expPayout:80,   priceLow:100,  priceHigh:135,  rating:"FAIR",      maxBid:120,  walkAway:140,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"Won R1 in 2024 — repeat narrative may inflate. -33% ROI. Only under $100." },
+  { seed:12, team:"High Point",      region:"West",    r1:.25, r2:.06, s16:.01, e8:.003,f4:.001,champ:0,   upsetEV:12, blowoutEV:0,  expPayout:70,   priceLow:100,  priceHigh:135,  rating:"AVOID",     maxBid:120,  walkAway:135,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"Hard avoid. -33% ROI." },
+  { seed:12, team:"Akron",           region:"Midwest", r1:.28, r2:.07, s16:.015,e8:.005,f4:.001,champ:0,   upsetEV:14, blowoutEV:0,  expPayout:80,   priceLow:100,  priceHigh:135,  rating:"FAIR",      maxBid:120,  walkAway:140,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"-33% ROI. Only if under $100." },
+
+  // ── 13-SEEDS ─────────────────────────────────────────────────────────────
+  { seed:13, team:"Cal Baptist",     region:"East",    r1:.08, r2:.015,s16:.003,e8:.001,f4:0,    champ:0,   upsetEV:10, blowoutEV:0,  expPayout:35,   priceLow:75,   priceHigh:100,  rating:"AVOID",     maxBid:80,   walkAway:100,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"-75.5% ROI. Lottery ticket only." },
+  { seed:13, team:"Troy",            region:"South",   r1:.10, r2:.02, s16:.004,e8:.001,f4:0,    champ:0,   upsetEV:12, blowoutEV:0,  expPayout:42,   priceLow:75,   priceHigh:100,  rating:"FAIR",      maxBid:80,   walkAway:100,  tag:TAGS.LOTTERY,  playIn:false, bluBlood:false,
+    notes:"Plays Nebraska (first-ever tourney). Marginal upset interest. Pass above $80." },
+  { seed:13, team:"Hawaii",          region:"West",    r1:.09, r2:.015,s16:.003,e8:.001,f4:0,    champ:0,   upsetEV:11, blowoutEV:0,  expPayout:38,   priceLow:75,   priceHigh:100,  rating:"FAIR",      maxBid:80,   walkAway:100,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"-75.5% ROI." },
+  { seed:13, team:"Hofstra",         region:"Midwest", r1:.08, r2:.015,s16:.003,e8:.001,f4:0,    champ:0,   upsetEV:10, blowoutEV:0,  expPayout:35,   priceLow:75,   priceHigh:100,  rating:"AVOID",     maxBid:80,   walkAway:100,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+    notes:"-75.5% ROI. Hard pass." },
+
+  // ── 14-SEEDS ─────────────────────────────────────────────────────────────
+  { seed:14, team:"North Dakota St", region:"East",    r1:.05, r2:.005,s16:.001,e8:0,    f4:0,    champ:0,   upsetEV:8,  blowoutEV:15, expPayout:40,   priceLow:55,   priceHigh:70,   rating:"FAIR",      maxBid:60,   walkAway:75,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
+    notes:"Blowout/upset bonus play. +0.6% 14-seed ROI = near break-even." },
+  { seed:14, team:"Penn",            region:"South",   r1:.06, r2:.008,s16:.001,e8:0,    f4:0,    champ:0,   upsetEV:9,  blowoutEV:15, expPayout:45,   priceLow:55,   priceHigh:70,   rating:"BUY",       maxBid:65,   walkAway:75,   tag:TAGS.LOTTERY,  playIn:false, bluBlood:false,
+    notes:"Best 14-seed. Faces Illinois (Off #1, Def #28) — ~15% upset corridor. Ivy buzz. At $55–$65, fine lottery ticket." },
+  { seed:14, team:"Kennesaw State",  region:"West",    r1:.06, r2:.005,s16:.001,e8:0,    f4:0,    champ:0,   upsetEV:9,  blowoutEV:15, expPayout:42,   priceLow:55,   priceHigh:70,   rating:"FAIR",      maxBid:60,   walkAway:75,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
+    notes:"Blowout bonus play. +0.6% ROI at typical prices." },
+  { seed:14, team:"Wright State",    region:"Midwest", r1:.06, r2:.005,s16:.001,e8:0,    f4:0,    champ:0,   upsetEV:9,  blowoutEV:15, expPayout:42,   priceLow:55,   priceHigh:70,   rating:"FAIR",      maxBid:60,   walkAway:75,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
+    notes:"Blowout bonus play." },
+
+  // ── 15-SEEDS ─────────────────────────────────────────────────────────────
+  { seed:15, team:"Furman",          region:"East",    r1:.04, r2:.003,s16:0,    e8:0,    f4:0,    champ:0,   upsetEV:6,  blowoutEV:20, expPayout:38,   priceLow:45,   priceHigh:60,   rating:"FAIR",      maxBid:50,   walkAway:60,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
+    notes:"-100% win return historically. Blowout EV makes it near-fair at $45–$50." },
+  { seed:15, team:"Idaho",           region:"South",   r1:.03, r2:.002,s16:0,    e8:0,    f4:0,    champ:0,   upsetEV:5,  blowoutEV:22, expPayout:38,   priceLow:45,   priceHigh:60,   rating:"FAIR",      maxBid:50,   walkAway:60,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
+    notes:"Higher blowout EV (faces high-powered offense). Near break-even at $45." },
+  { seed:15, team:"Queens",          region:"West",    r1:.05, r2:.003,s16:0,    e8:0,    f4:0,    champ:0,   upsetEV:7,  blowoutEV:20, expPayout:42,   priceLow:45,   priceHigh:60,   rating:"FAIR",      maxBid:50,   walkAway:60,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
+    notes:"Slightly better R1 odds. Blowout/upset play." },
+  { seed:15, team:"Tennessee State", region:"Midwest", r1:.04, r2:.002,s16:0,    e8:0,    f4:0,    champ:0,   upsetEV:6,  blowoutEV:22, expPayout:40,   priceLow:45,   priceHigh:60,   rating:"FAIR",      maxBid:50,   walkAway:60,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
+    notes:"Blowout play. Near break-even." },
+
+  // ── 16-SEEDS (BLOWOUT BONUS PLAYS) ───────────────────────────────────────
+  { seed:16, team:"Siena",           region:"East",    r1:.01, r2:0,    s16:0,    e8:0,    f4:0,    champ:0,   upsetEV:0,  blowoutEV:45, expPayout:50,   priceLow:50,   priceHigh:65,   rating:"GREAT BUY", maxBid:60,   walkAway:65,   tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
+    notes:"PRIORITY #9. Best 16-seed. Faces Duke #1 defense = massive blowout probability. +61.2% 16-seed ROI. Target $50–$55." },
+  { seed:16, team:"Prairie View/Lehigh",region:"South",r1:.01, r2:0,    s16:0,    e8:0,    f4:0,    champ:0,   upsetEV:0,  blowoutEV:40, expPayout:45,   priceLow:45,   priceHigh:60,   rating:"BUY",       maxBid:55,   walkAway:60,   tag:TAGS.BLOWOUT,  playIn:true,  bluBlood:false,
+    notes:"Play-in 16-seed. Blowout bonus play. +61.2% ROI. Under $55." },
+  { seed:16, team:"LIU",             region:"West",    r1:.01, r2:0,    s16:0,    e8:0,    f4:0,    champ:0,   upsetEV:0,  blowoutEV:45, expPayout:50,   priceLow:50,   priceHigh:65,   rating:"BUY",       maxBid:55,   walkAway:65,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
+    notes:"Blowout bonus play. +61.2% ROI. Buy under $60." },
+  { seed:16, team:"UMBC/Howard",     region:"Midwest", r1:.01, r2:0,    s16:0,    e8:0,    f4:0,    champ:0,   upsetEV:0,  blowoutEV:40, expPayout:45,   priceLow:45,   priceHigh:60,   rating:"BUY",       maxBid:55,   walkAway:60,   tag:TAGS.BLOWOUT,  playIn:true,  bluBlood:false,
+    notes:"Play-in 16-seed. Blowout bonus play. Under $55." },
+];
+
+const INIT_COMPETITORS = [
+  { id:1, name:"Gallivan, Dalzell",        spent:0, locked:false, teams:[], color:"#ef4444" },
+  { id:2, name:"Mulvey, Buss",             spent:0, locked:false, teams:[], color:"#f97316" },
+  { id:3, name:"Warmbier, Chesnut",        spent:0, locked:false, teams:[], color:"#eab308" },
+  { id:4, name:"Bernardi, McAvoy",         spent:0, locked:false, teams:[], color:"#22c55e" },
+  { id:5, name:"Fritz, Germanos, Spatz",   spent:0, locked:false, teams:[], color:"#06b6d4" },
+  { id:6, name:"BLSM",                     spent:0, locked:false, teams:[], color:"#8b5cf6" },
+  { id:7, name:"Tate",                     spent:0, locked:false, teams:[], color:"#ec4899" },
+  { id:8, name:"Wampler, Harrington, Lamb",spent:0, locked:false, teams:[], color:"#64748b" },
+];
+
+const BUDGET = 2500;
+
+function calcEV(team, pot) {
+  const p = pot || POT_BASE;
+  return Math.round(
+    team.r1    * p*0.010 +
+    team.r2    * p*0.016 +
+    team.s16   * p*0.020 +
+    team.e8    * p*0.028 +
+    team.f4    * p*0.035 +
+    team.champ * p*0.042 +
+    (team.upsetEV  || 0) +
+    (team.blowoutEV|| 0)
+  );
+}
+
+const RC = {
+  "GREAT BUY": { bg:"#052e16", border:"#16a34a", text:"#4ade80" },
+  "BUY":       { bg:"#042f2e", border:"#0d9488", text:"#2dd4bf" },
+  "FAIR":      { bg:"#1c1917", border:"#78716c", text:"#a8a29e" },
+  "OVERPRICED":{ bg:"#2d1515", border:"#b91c1c", text:"#f87171" },
+  "AVOID":     { bg:"#1a0a0a", border:"#7f1d1d", text:"#ef4444" },
+};
+
+// ─── APP ──────────────────────────────────────────────────────────────────
+// ─── APP ──────────────────────────────────────────────────────────────────
+function App() {
+  const MY_NAME = "Mulvey, Buss";
+
+  // ── LOCAL UI state (stays per-client) ────────────────────────────────
+  const [tab, setTab]           = useState("dash");
+  const [modal, setModal]       = useState(null);
+  const [bidAmt, setBidAmt]     = useState("");
+  const [bidBuyer, setBidBuyer] = useState("Mulvey, Buss");
+  const [sort, setSort]         = useState("surplus");
+  const [seedF, setSeedF]       = useState("all");
+  const [ratingF, setRatingF]   = useState("all");
+  const [search, setSearch]     = useState("");
+  const [toast, setToast]       = useState(null);
+  const [showSold, setShowSold] = useState(false);
+  const [connected, setConnected] = useState(false);
+
+  // ── SHARED state — synced from Firebase in real time ─────────────────
+  const [sold, setSold]   = useState([]);   // [{fbKey, team, price, buyer}]
+  const [pot, setPot]     = useState(POT_BASE);
+
+  // Derive comps from sold list (single source of truth)
+  const comps = useMemo(() => {
+    return INIT_COMPETITORS.map(c => {
+      const myPurchases = sold.filter(s => s.buyer === c.name);
+      const spent = myPurchases.reduce((sum, s) => sum + s.price, 0);
+      return {
+        ...c,
+        spent,
+        locked: spent > BUDGET,
+        teams: myPurchases.map(s => ({ ...s.team, pricePaid: s.price, ev: calcEV(s.team, pot) })),
+      };
+    });
+  }, [sold, pot]);
+
+  // My stats
+  const myComp   = comps.find(c => c.name === MY_NAME) || { spent:0, locked:false, teams:[] };
+  const mySpent  = myComp.spent;
+  const myTeams  = myComp.teams;
+  const myLocked = myComp.locked;
+  const myRemain = BUDGET - mySpent;
+  const lockedComps = comps.filter(c => c.locked).length;
+
+  // ── FIREBASE LISTENER — subscribe to sold list ────────────────────────
+  useEffect(() => {
+    const soldRef = ref(db, "sold");
+    const unsub = onValue(soldRef, (snapshot) => {
+      setConnected(true);
+      const data = snapshot.val();
+      if (!data) { setSold([]); return; }
+      // Firebase stores as object with auto-keys — convert to array
+      const arr = Object.entries(data).map(([fbKey, val]) => ({ fbKey, ...val }));
+      // Sort by timestamp so order is consistent
+      arr.sort((a, b) => (a.ts || 0) - (b.ts || 0));
+      setSold(arr);
+    }, (error) => {
+      setConnected(false);
+      console.error("Firebase error:", error);
+    });
+    return () => unsub();
+  }, []);
+
+  // Update pot estimate from live sold data
+  useEffect(() => {
+    if (sold.length >= 8) {
+      const avg = sold.reduce((s,t) => s + t.price, 0) / sold.length;
+      const proj = Math.round(avg * 68);
+      setPot(Math.max(15000, Math.min(26000, proj)));
+    }
+  }, [sold]);
+
+  const showToast = (msg, type="ok") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3200);
+  };
+
+  // ── LEVEL 3: DYNAMIC PROBABILITY + PRICING ADJUSTMENT ────────────────
+  const adjustedTeams = useMemo(() => {
+    const soldNames = new Set(sold.map(s => s.team.team));
+    const seedSales = {};
+    sold.forEach(s => {
+      const seed = s.team.seed;
+      const hist = SEED_HIST[seed];
+      if (!hist) return;
+      if (!seedSales[seed]) seedSales[seed] = { ratios: [], prices: [] };
+      seedSales[seed].ratios.push(s.price / hist.avg);
+      seedSales[seed].prices.push(s.price);
+    });
+    let roomTemp = 1.0;
+    const allRatios = Object.values(seedSales).flatMap(d => d.ratios);
+    if (allRatios.length >= 3) {
+      roomTemp = allRatios.reduce((a, b) => a + b, 0) / allRatios.length;
+    }
+    const getAdjustedMultiplier = (seed) => {
+      if (seedSales[seed]?.ratios.length > 0) {
+        const r = seedSales[seed].ratios;
+        return r.reduce((a,b) => a+b, 0) / r.length;
+      }
+      const highVarianceSeeds = new Set([1, 2, 3, 7, 8]);
+      const roomWeight = highVarianceSeeds.has(seed) ? 0.7 : 0.5;
+      return roomTemp * roomWeight + 1.0 * (1 - roomWeight);
+    };
+    return TEAMS
+      .filter(t => !soldNames.has(t.team))
+      .map(t => {
+        let adj = { ...t };
+        const strongSeedSoldInRegion = sold.some(s => s.team.region === t.region && s.team.seed <= 2);
+        if (strongSeedSoldInRegion && t.seed >= 4) {
+          adj.f4    = +(t.f4    * 0.88).toFixed(4);
+          adj.champ = +(t.champ * 0.85).toFixed(4);
+        }
+        const mult = getAdjustedMultiplier(t.seed);
+        const hist = SEED_HIST[t.seed];
+        const dynLow  = Math.round(hist.min * mult * (t.priceMod || 1));
+        const dynHigh = Math.round(hist.max * mult * (t.priceMod || 1));
+        const blendedLow  = Math.round(dynLow  * 0.7 + t.priceLow  * 0.3);
+        const blendedHigh = Math.round(dynHigh * 0.7 + t.priceHigh * 0.3);
+        const blendedMid  = Math.round((blendedLow + blendedHigh) / 2);
+        adj.priceLow  = blendedLow;
+        adj.priceHigh = blendedHigh;
+        adj.priceIsDynamic = allRatios.length >= 2;
+        adj.roomTemp  = roomTemp;
+        adj.priceMult = mult;
+        const ev = calcEV(adj, pot);
+        const evBasedMax = Math.round(ev * 0.90);
+        adj.maxBid    = Math.min(evBasedMax, Math.round(blendedHigh * 0.95));
+        adj.walkAway  = Math.round(blendedHigh * 1.05);
+        const priceRatio = ev / blendedMid;
+        let newRating = t.rating;
+        if (priceRatio >= 1.4)       newRating = "GREAT BUY";
+        else if (priceRatio >= 1.1)  newRating = "BUY";
+        else if (priceRatio >= 0.85) newRating = "FAIR";
+        else if (priceRatio >= 0.65) newRating = "OVERPRICED";
+        else                         newRating = "AVOID";
+        if (allRatios.length >= 2)   adj.rating = newRating;
+        const surplus = ev - blendedMid;
+        return { ...adj, ev, surplus };
+      });
+  }, [sold, pot]);
+
+  // Filtered + sorted table
+  const tableTeams = useMemo(() => {
+    return adjustedTeams
+      .filter(t => {
+        if (seedF !== "all" && t.seed !== parseInt(seedF)) return false;
+        if (ratingF !== "all" && t.rating !== ratingF) return false;
+        if (search && !t.team.toLowerCase().includes(search.toLowerCase())) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        if (sort === "surplus") return b.surplus - a.surplus;
+        if (sort === "ev")      return b.ev - a.ev;
+        if (sort === "seed")    return a.seed - b.seed;
+        if (sort === "maxbid")  return b.maxBid - a.maxBid;
+        return 0;
+      });
+  }, [adjustedTeams, seedF, ratingF, search, sort]);
+
+  // ── FIREBASE WRITE: record a sale ─────────────────────────────────────
+  const handleSale = () => {
+    const price = parseInt(bidAmt);
+    if (!price || price < 10 || !modal) return;
+
+    // Push to Firebase — all clients update automatically via listener
+    const soldRef = ref(db, "sold");
+    push(soldRef, {
+      team:  modal,
+      price: price,
+      buyer: bidBuyer,
+      ts:    Date.now(),
+    });
+
+    const buyer = comps.find(c => c.name === bidBuyer);
+    const newSpent = (buyer?.spent || 0) + price;
+    if (newSpent > BUDGET) {
+      showToast(bidBuyer === MY_NAME ? `⚠️ YOU ARE LOCKED OUT — Total: $${newSpent}` : `🔒 ${bidBuyer} LOCKED OUT`, "warn");
+    } else {
+      showToast(bidBuyer === MY_NAME ? `✓ ${modal.team} secured for $${price}` : `${modal.team} → ${bidBuyer} @ $${price}`);
+    }
+    setModal(null); setBidAmt(""); setBidBuyer("Mulvey, Buss");
+  };
+
+  // ── FIREBASE WRITE: undo a sale ───────────────────────────────────────
+  const handleUndo = (fbKey, sale) => {
+    if (!fbKey) return;
+    // Remove from Firebase — all clients update automatically
+    remove(ref(db, `sold/${fbKey}`));
+    showToast(`↩ Undid ${sale.team.team} (${sale.buyer} -$${sale.price})`, "undo");
+  };
+
+  const premiumLeft = TEAMS.filter(t => t.seed <= 2 && !sold.find(s => s.team.team === t.team)).length;
+  const myEV = myTeams.reduce((s, t) => s + t.ev, 0);
+
+  const checkpoint = () => {
+    if (mySpent === 0) return { msg:"📋 Pre-auction: Target Vanderbilt ($280), South Florida ($160), Tennessee ($250), Siena ($55). Reserve $1,000–$1,200 for Michigan or Florida.", color:"#60a5fa" };
+    if (myLocked) return { msg:"🔒 You are locked out. Your portfolio is set. Root for your teams.", color:"#ef4444" };
+    if (myRemain > 1400) return { msg:"✅ Excellent position. You have full flexibility for a 1-seed. Bid confidently up to $1,200 on Michigan, $1,050 on Florida.", color:"#4ade80" };
+    if (myRemain > 1000) return { msg:"⚡ Good reserves. Target Florida (cheapest 1-seed) or Arizona as fallback. Avoid going over $950 unless 2+ competitors locked.", color:"#86efac" };
+    if (myRemain > 600)  return { msg:"🟡 Moderate reserves. Only bid on a 1-seed if it drops below $950. Michigan or Florida at distressed pricing only.", color:"#f59e0b" };
+    return { msg:"🔴 Low reserves. Skip 1-seeds unless under $800 with 2+ locked competitors. Fill portfolio with cheap 11/16-seeds.", color:"#ef4444" };
+  };
+  const cp = checkpoint();
+
+  // ─── RENDER ─────────────────────────────────────────────────────────────
+  return (
+    <div style={{ fontFamily:"'Barlow Condensed','Oswald',sans-serif", background:"#070711", minHeight:"100vh", color:"#e2e8f0" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500;600;700;800;900&family=Barlow:wght@300;400;500&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0}
+        ::-webkit-scrollbar{width:5px;height:5px}
+        ::-webkit-scrollbar-track{background:#0d0d1a}
+        ::-webkit-scrollbar-thumb{background:#2d3748;border-radius:3px}
+        .tb{cursor:pointer;padding:9px 18px;border:none;background:transparent;color:#4b5563;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;transition:all .2s;border-bottom:2px solid transparent}
+        .tb.on{color:#f59e0b;border-bottom-color:#f59e0b}
+        .tb:hover{color:#9ca3af}
+        .sb{cursor:pointer;padding:3px 10px;border:1px solid #2d3748;border-radius:4px;background:transparent;color:#6b7280;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
+        .sb.on{background:#1e293b;color:#f59e0b;border-color:#f59e0b}
+        .sb:hover{color:#e2e8f0;border-color:#475569}
+        .tr{cursor:pointer;transition:background .12s}
+        .tr:hover{background:#12122a!important}
+        .bb{cursor:pointer;padding:3px 9px;border:1px solid #f59e0b;border-radius:4px;background:transparent;color:#f59e0b;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;letter-spacing:.05em;transition:all .12s}
+        .bb:hover{background:#f59e0b;color:#070711}
+        input,select{font-family:'Barlow Condensed',sans-serif}
+        .card{background:#0f0f1d;border:1px solid #1a1a2e;border-radius:10px;padding:16px 18px}
+      `}</style>
+
+      {/* TOAST */}
+      {toast && (
+        <div style={{ position:"fixed", top:16, right:16, zIndex:9999,
+          background: toast.type==="warn"?"#7f1d1d": toast.type==="undo"?"#1e1a2e":"#052e16",
+          border:`1px solid ${toast.type==="warn"?"#dc2626": toast.type==="undo"?"#7c3aed":"#16a34a"}`,
+          color: toast.type==="warn"?"#fca5a5": toast.type==="undo"?"#c4b5fd":"#86efac",
+          padding:"10px 18px", borderRadius:8, fontSize:14, fontWeight:700,
+          letterSpacing:".04em", boxShadow:"0 4px 24px rgba(0,0,0,.6)" }}>
+          {toast.msg}
+        </div>
+      )}
+
+      {/* BID MODAL */}
+      {modal && (
+        <div style={{ position:"fixed",inset:0,zIndex:1000,background:"rgba(0,0,0,.88)",display:"flex",alignItems:"center",justifyContent:"center" }}
+          onClick={() => setModal(null)}>
+          <div style={{ background:"#0f0f1d",border:"1px solid #2d3748",borderRadius:14,padding:28,width:430,maxWidth:"92vw" }}
+            onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:18 }}>
+              <div>
+                <div style={{ fontSize:11,color:"#4b5563",letterSpacing:".1em",textTransform:"uppercase" }}>
+                  SEED {modal.seed} · {modal.region}{modal.playIn?" · PLAY-IN":""}
+                </div>
+                <div style={{ fontSize:28,fontWeight:900,color:"#f1f5f9",letterSpacing:".01em",lineHeight:1 }}>
+                  {modal.bluBlood && <span style={{ color:"#f59e0b",marginRight:4,fontSize:22 }}>★</span>}
+                  {modal.team}
+                </div>
+              </div>
+              <span style={{ ...RC[modal.rating], padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:800,letterSpacing:".06em",border:`1px solid ${RC[modal.rating]?.border}` }}>
+                {modal.rating}
+              </span>
+            </div>
+
+            {/* Stats */}
+            <div style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:16 }}>
+              {[
+                { l:"Exp. Payout",   v:`$${calcEV(modal,pot)}` },
+                { l:"Max Bid",       v:`$${modal.maxBid}` },
+                { l:"Walk Away",     v:`$${modal.walkAway}` },
+                { l:"Seed ROI",      v:SEED_HIST[modal.seed]?.roiLabel },
+                { l:"Champ%",        v:`${(modal.champ*100).toFixed(1)}%` },
+                { l:"Price Range",   v:`$${modal.priceLow}–$${modal.priceHigh}` },
+              ].map(s => (
+                <div key={s.l} style={{ background:"#141428",borderRadius:8,padding:"8px 10px",textAlign:"center" }}>
+                  <div style={{ fontSize:9,color:"#4b5563",textTransform:"uppercase",letterSpacing:".08em" }}>{s.l}</div>
+                  <div style={{ fontSize:16,fontWeight:800,color:"#f59e0b",marginTop:2 }}>{s.v}</div>
+                </div>
+              ))}
+            </div>
+            {/* Dynamic pricing signal */}
+            {modal.priceIsDynamic && (
+              <div style={{ marginBottom:14,padding:"8px 12px",background:"#0a0f1a",borderRadius:6,border:"1px solid #1e3a5f",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
+                <span style={{ fontSize:11,color:"#4b5563" }}>⚡ Price dynamically adjusted from live auction data</span>
+                <span style={{ fontSize:12,fontWeight:800,
+                  color: modal.priceMult > 1.12 ? "#ef4444" : modal.priceMult < 0.9 ? "#60a5fa" : "#94a3b8"
+                }}>
+                  Room running at {modal.priceMult ? (modal.priceMult*100).toFixed(0) : 100}% of avg
+                </span>
+              </div>
+            )}
+
+            {/* Win probs */}
+            <div style={{ display:"flex",gap:4,marginBottom:14 }}>
+              {[["R1",modal.r1],["R2",modal.r2],["S16",modal.s16],["E8",modal.e8],["F4",modal.f4],["🏆",modal.champ]].map(([l,v]) => (
+                <div key={l} style={{ flex:1,background:"#141428",borderRadius:6,padding:"5px 4px",textAlign:"center" }}>
+                  <div style={{ fontSize:9,color:"#4b5563",letterSpacing:".06em" }}>{l}</div>
+                  <div style={{ fontSize:13,fontWeight:700,color: v>=.5?"#4ade80":v>=.2?"#f59e0b":"#94a3b8" }}>{(v*100).toFixed(0)}%</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Notes */}
+            <div style={{ fontSize:12,color:"#64748b",lineHeight:1.5,background:"#0a0a1a",padding:"10px 12px",borderRadius:6,borderLeft:"3px solid #3730a3",marginBottom:16 }}>
+              {modal.notes}
+            </div>
+
+            {/* Inputs */}
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14 }}>
+              <div>
+                <label style={{ fontSize:10,color:"#4b5563",textTransform:"uppercase",letterSpacing:".08em",display:"block",marginBottom:5 }}>Buyer</label>
+                <select value={bidBuyer} onChange={e=>setBidBuyer(e.target.value)}
+                  style={{ width:"100%",background:"#141428",border:"1px solid #2d3748",color:"#f1f5f9",padding:"7px 10px",borderRadius:6,fontSize:14 }}>
+                  {comps.map(c => (
+                    <option key={c.id} value={c.name}>
+                      {c.name === MY_NAME ? `★ ${c.name} (YOU)` : c.name}{c.locked?" 🔒":""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize:10,color:"#4b5563",textTransform:"uppercase",letterSpacing:".08em",display:"block",marginBottom:5 }}>Sale Price ($)</label>
+                <input type="number" min="10" step="5" value={bidAmt} onChange={e=>setBidAmt(e.target.value)}
+                  onKeyDown={e=>e.key==="Enter"&&handleSale()} placeholder="e.g. 280"
+                  style={{ width:"100%",background:"#141428",border:"1px solid #2d3748",color:"#f1f5f9",padding:"7px 10px",borderRadius:6,fontSize:14 }} />
+              </div>
+            </div>
+
+            <div style={{ display:"flex",gap:10 }}>
+              <button onClick={handleSale}
+                style={{ flex:1,padding:"10px 0",background:"#f59e0b",color:"#070711",border:"none",borderRadius:6,fontSize:15,fontWeight:900,letterSpacing:".06em",cursor:"pointer" }}>
+                RECORD SALE
+              </button>
+              <button onClick={()=>setModal(null)}
+                style={{ padding:"10px 14px",background:"transparent",border:"1px solid #2d3748",color:"#4b5563",borderRadius:6,fontSize:14,fontWeight:600,cursor:"pointer" }}>
+                CANCEL
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── HEADER ─────────────────────────────────────────────────────── */}
+      <div style={{ background:"linear-gradient(180deg,#0d0d22 0%,#070711 100%)",borderBottom:"1px solid #141428",padding:"14px 24px 0" }}>
+        <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12,marginBottom:10 }}>
+          {/* Logo */}
+          <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+            <div style={{ display:"flex",alignItems:"baseline",gap:6 }}>
+              <span style={{ fontSize:30,fontWeight:900,letterSpacing:".02em",color:"#f59e0b" }}>CALCUTTA</span>
+              <span style={{ fontSize:30,fontWeight:900,color:"#2d3748" }}>/</span>
+              <span style={{ fontSize:30,fontWeight:900,color:"#f1f5f9" }}>26</span>
+            </div>
+            <div style={{ display:"flex",alignItems:"center",gap:5,marginLeft:4,background:"#0a0a14",border:`1px solid ${connected?"#16a34a":"#7f1d1d"}`,borderRadius:20,padding:"3px 10px" }}>
+              <div style={{ width:7,height:7,borderRadius:"50%",background:connected?"#4ade80":"#ef4444",boxShadow:connected?"0 0 6px #4ade80":"0 0 6px #ef4444" }} />
+              <span style={{ fontSize:10,color:connected?"#4ade80":"#ef4444",fontWeight:700,letterSpacing:".08em",textTransform:"uppercase" }}>
+                {connected ? "LIVE" : "CONNECTING..."}
+              </span>
+            </div>
+          </div>
+
+          {/* Live stats */}
+          <div style={{ display:"flex",gap:18,flexWrap:"wrap" }}>
+            {[
+              { l:"Budget Left",  v:`$${myRemain.toLocaleString()}`, c: myLocked?"#ef4444":myRemain<500?"#f59e0b":"#4ade80", sub: myLocked?"LOCKED":"of $2,500" },
+              { l:"My Equity",    v:`$${myEV.toLocaleString()}`,     c:"#f59e0b", sub:"expected payout" },
+              { l:"Live Pot",     v:`$${pot.toLocaleString()}`,      c:"#f1f5f9", sub:"projected total" },
+              { l:"Bidders Left", v:`${8-lockedComps}`,              c: lockedComps>0?"#a78bfa":"#f1f5f9", sub:`${lockedComps} locked out` },
+              { l:"Teams Left",   v:`${68-sold.length}`,             c:"#94a3b8", sub:`${sold.length} sold` },
+              { l:"Premium Left", v:premiumLeft,                     c:"#f59e0b", sub:"1 & 2-seeds" },
+            ].map(s => (
+              <div key={s.l} style={{ textAlign:"right" }}>
+                <div style={{ fontSize:10,color:"#374151",textTransform:"uppercase",letterSpacing:".1em" }}>{s.l}</div>
+                <div style={{ fontSize:22,fontWeight:800,color:s.c,lineHeight:1.05 }}>{s.v}</div>
+                <div style={{ fontSize:10,color:"#374151" }}>{s.sub}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Budget bar */}
+        <div style={{ height:3,background:"#141428",borderRadius:2,marginBottom:10 }}>
+          <div style={{ height:"100%",borderRadius:2,width:`${Math.min(100,(mySpent/BUDGET)*100)}%`,
+            background: myLocked?"#ef4444":myRemain<500?"#f59e0b":"#16a34a",transition:"width .5s" }} />
+        </div>
+
+        {/* Tabs */}
+        <div style={{ display:"flex",gap:0,borderTop:"1px solid #141428" }}>
+          {[["dash","⚡ Dashboard"],["teams","📋 All Teams"],["mine",`🏆 My Teams (${myTeams.length})`],["comps","👥 Competitors"],["intel","📊 Intel"]].map(([k,l]) => (
+            <button key={k} className={`tb ${tab===k?"on":""}`} onClick={()=>setTab(k)}>{l}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── DASHBOARD ──────────────────────────────────────────────────── */}
+      {tab==="dash" && (
+        <div style={{ padding:"18px 24px" }}>
+          {/* Lockout banner */}
+          {lockedComps > 0 && (
+            <div style={{ background:"#1a0a0a",border:"1px solid #7f1d1d",borderRadius:8,padding:"10px 16px",marginBottom:14,display:"flex",gap:12,alignItems:"center" }}>
+              <span style={{ fontSize:20 }}>🔒</span>
+              <div>
+                <div style={{ fontSize:13,fontWeight:800,color:"#fca5a5",letterSpacing:".04em" }}>{lockedComps} COMPETITOR{lockedComps>1?"S":""} LOCKED OUT — pricing power shifting to you</div>
+                <div style={{ fontSize:11,color:"#7f1d1d",marginTop:1 }}>{comps.filter(c=>c.locked).map(c=>c.name).join(", ")}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Checkpoint */}
+          <div style={{ background:"#0a0a1a",border:"1px solid #1e3a5f",borderRadius:8,padding:"12px 16px",marginBottom:16,fontSize:13,color:cp.color,lineHeight:1.5,borderLeft:`4px solid ${cp.color}` }}>
+            {cp.msg}
+          </div>
+
+          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:14 }}>
+            {/* Priority targets */}
+            <div className="card">
+              <div style={{ fontSize:11,color:"#f59e0b",fontWeight:800,letterSpacing:".1em",textTransform:"uppercase",marginBottom:12 }}>🎯 Priority Targets</div>
+              {[
+                { rank:1, team:"Michigan",      seed:1,  maxBid:1200, ev:1480, note:"KenPom #2, Def #1, best region" },
+                { rank:2, team:"Vanderbilt",    seed:5,  maxBid:300,  ev:370,  note:"KenPom #11, priced as 5-seed" },
+                { rank:3, team:"Florida",       seed:1,  maxBid:1050, ev:1060, note:"Cheapest 1-seed, defending champ" },
+                { rank:4, team:"South Florida", seed:11, maxBid:175,  ev:155,  note:"+44.7% 11-seed tier" },
+                { rank:5, team:"Illinois",      seed:3,  maxBid:550,  ev:630,  note:"KenPom #7, #1 offense" },
+                { rank:6, team:"VCU",           seed:11, maxBid:160,  ev:130,  note:"Faces UNC (no Caleb Wilson)" },
+                { rank:7, team:"Tennessee",     seed:6,  maxBid:260,  ev:250,  note:"+16% 6-seed ROI, under radar" },
+                { rank:8, team:"Louisville",    seed:6,  maxBid:260,  ev:250,  note:"KenPom #19, balanced" },
+                { rank:9, team:"Siena",         seed:16, maxBid:60,   ev:50,   note:"Faces Duke → blowout bonus" },
+                { rank:10,team:"Nebraska",      seed:4,  maxBid:400,  ev:350,  note:"No brand premium, KenPom #14" },
+              ].map((t,i) => {
+                const isSold = sold.find(s => s.team.team === t.team);
+                return (
+                  <div key={t.team} style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"7px 0",borderBottom:i<9?"1px solid #141428":"none",opacity:isSold?0.4:1 }}>
+                    <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+                      <span style={{ fontSize:10,color:"#374151",width:14,textAlign:"right" }}>{t.rank}</span>
+                      <span style={{ background:"#1e3a5f",color:"#60a5fa",fontSize:10,fontWeight:800,padding:"1px 6px",borderRadius:4 }}>{t.seed}</span>
+                      <div>
+                        <div style={{ fontSize:13,fontWeight:700,color: isSold?"#4b5563":"#f1f5f9" }}>
+                          {t.team} {isSold&&<span style={{ fontSize:10,color:"#374151" }}>SOLD ${isSold.price}</span>}
+                        </div>
+                        <div style={{ fontSize:10,color:"#374151" }}>{t.note}</div>
+                      </div>
+                    </div>
+                    <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+                      <div style={{ textAlign:"right" }}>
+                        <div style={{ fontSize:12,color:"#4ade80",fontWeight:700 }}>EV ${t.ev}</div>
+                        <div style={{ fontSize:10,color:"#374151" }}>max ${t.maxBid}</div>
+                      </div>
+                      {!isSold && <button className="bb" onClick={()=>setModal(TEAMS.find(x=>x.team===t.team))}>BID</button>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Trap teams + strategy panels */}
+            <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
+              {/* Trap teams */}
+              <div className="card">
+                <div style={{ fontSize:11,color:"#ef4444",fontWeight:800,letterSpacing:".1em",textTransform:"uppercase",marginBottom:12 }}>⚠️ Trap Teams — Do NOT Overbid</div>
+                {[
+                  { team:"Kentucky",     seed:7,  reason:"-45.9% ROI, room bids $280–$330",  avoid:"$175" },
+                  { team:"Houston",      seed:2,  reason:"Room treats as 1-seed, $900+",      avoid:"$750" },
+                  { team:"UConn",        seed:2,  reason:"Champion brand, brutal region",      avoid:"$700" },
+                  { team:"North Carolina",seed:6, reason:"Missing Caleb Wilson (season-ending)",avoid:"$200"},
+                  { team:"Kansas",       seed:4,  reason:"KenPom #21, brand adds $100+",       avoid:"$400" },
+                  { team:"ALL 8-seeds",  seed:8,  reason:"-62.3% ROI — zero exceptions",       avoid:"$130" },
+                ].map((t,i) => {
+                  const isSold = sold.find(s => s.team.team === t.team);
+                  return (
+                    <div key={t.team} style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"7px 0",borderBottom:i<5?"1px solid #141428":"none" }}>
+                      <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+                        <span style={{ background:"#2d1515",color:"#ef4444",fontSize:10,fontWeight:800,padding:"1px 6px",borderRadius:4 }}>{t.seed}</span>
+                        <div>
+                          <div style={{ fontSize:13,fontWeight:700,color:"#e2e8f0" }}>{t.team}</div>
+                          <div style={{ fontSize:10,color:"#374151" }}>{t.reason}</div>
+                        </div>
+                      </div>
+                      <span style={{ fontSize:11,color:"#ef4444",fontWeight:700,whiteSpace:"nowrap" }}>pass &gt;{t.avoid}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Budget checkpoint */}
+              <div className="card" style={{ borderColor:"#1e3a5f" }}>
+                <div style={{ fontSize:11,color:"#60a5fa",fontWeight:800,letterSpacing:".1em",textTransform:"uppercase",marginBottom:10 }}>📊 Budget Checkpoint Table</div>
+                {[
+                  { range:"Under $800 spent",   action:"Bid aggressively on 1-seed — maximum leverage",  c:"#4ade80" },
+                  { range:"$800–$1,100 spent",  action:"Target Florida first (cheapest). Michigan if available",c:"#86efac" },
+                  { range:"$1,100–$1,400 spent",action:"Only bid 1-seed if drops below $950 (distressed)", c:"#f59e0b" },
+                  { range:"$1,400–$1,700 spent",action:"1-seed only under $800. Build breadth otherwise.", c:"#fb923c" },
+                  { range:"Over $1,700 spent",  action:"Do NOT bid on 1-seeds. Your portfolio IS your bet.", c:"#ef4444" },
+                ].map((r,i) => {
+                  const isActive = (i===0&&mySpent<800)||(i===1&&mySpent>=800&&mySpent<1100)||(i===2&&mySpent>=1100&&mySpent<1400)||(i===3&&mySpent>=1400&&mySpent<1700)||(i===4&&mySpent>=1700);
+                  return (
+                    <div key={r.range} style={{ display:"flex",gap:10,padding:"6px 8px",borderRadius:5,marginBottom:2,background:isActive?"#0a1628":"transparent",border:isActive?`1px solid ${r.c}`:"1px solid transparent" }}>
+                      <div style={{ fontSize:11,color:isActive?r.c:"#374151",fontWeight:isActive?700:400,minWidth:140,whiteSpace:"nowrap" }}>{r.range}</div>
+                      <div style={{ fontSize:11,color:isActive?"#cbd5e1":"#374151" }}>{r.action}</div>
+                    </div>
+                  );
+                })}
+                <div style={{ marginTop:10,fontSize:11,color:"#374151",background:"#070711",padding:"8px 10px",borderRadius:5,lineHeight:1.5 }}>
+                  Current spend: <span style={{ color:cp.color,fontWeight:700 }}>${mySpent}</span> — Remaining: <span style={{ color:cp.color,fontWeight:700 }}>${myRemain}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── ALL TEAMS ──────────────────────────────────────────────────── */}
+      {tab==="teams" && (
+        <div style={{ padding:"18px 24px" }}>
+          {/* Controls */}
+          <div style={{ display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:12 }}>
+            <input type="text" placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)}
+              style={{ background:"#0f0f1d",border:"1px solid #2d3748",color:"#f1f5f9",padding:"5px 10px",borderRadius:5,fontSize:13,width:150 }} />
+            <select value={seedF} onChange={e=>setSeedF(e.target.value)}
+              style={{ background:"#0f0f1d",border:"1px solid #2d3748",color:"#6b7280",padding:"5px 8px",borderRadius:5,fontSize:13 }}>
+              <option value="all">All Seeds</option>
+              {[...Array(16)].map((_,i)=><option key={i+1} value={i+1}>Seed {i+1}</option>)}
+            </select>
+            <select value={ratingF} onChange={e=>setRatingF(e.target.value)}
+              style={{ background:"#0f0f1d",border:"1px solid #2d3748",color:"#6b7280",padding:"5px 8px",borderRadius:5,fontSize:13 }}>
+              <option value="all">All Ratings</option>
+              {["GREAT BUY","BUY","FAIR","OVERPRICED","AVOID"].map(r=><option key={r} value={r}>{r}</option>)}
+            </select>
+            <div style={{ display:"flex",gap:5,alignItems:"center" }}>
+              <button
+                className={`sb ${showSold?"on":""}`}
+                onClick={()=>setShowSold(v=>!v)}
+                style={{ borderColor: showSold?"#6b7280":"#2d3748" }}
+              >
+                {showSold ? "👁 Hide Sold" : "👁 Show Sold"}
+                {sold.length > 0 && <span style={{ marginLeft:5,background:"#374151",borderRadius:10,padding:"0 5px",fontSize:10 }}>{sold.length}</span>}
+              </button>
+            </div>
+            <div style={{ display:"flex",gap:5,marginLeft:"auto",alignItems:"center" }}>
+              <span style={{ fontSize:10,color:"#374151",letterSpacing:".08em",textTransform:"uppercase" }}>Sort:</span>
+              {[["surplus","Surplus"],["ev","EV"],["seed","Seed"],["maxbid","Max Bid"]].map(([k,l])=>(
+                <button key={k} className={`sb ${sort===k?"on":""}`} onClick={()=>setSort(k)}>{l}</button>
+              ))}
+            </div>
+          </div>
+
+          {sold.length > 0 && (() => {
+            const allRatios = Object.values(
+              sold.reduce((acc, s) => {
+                const h = SEED_HIST[s.team.seed];
+                if (h) { acc[s.team.seed] = acc[s.team.seed] || []; acc[s.team.seed].push(s.price / h.avg); }
+                return acc;
+              }, {})
+            ).flat();
+            const temp = allRatios.length >= 3 ? (allRatios.reduce((a,b)=>a+b,0)/allRatios.length) : 1.0;
+            const tempLabel = temp > 1.12 ? "🔥 HOT" : temp < 0.9 ? "🧊 COLD" : "😐 NORMAL";
+            const tempColor = temp > 1.12 ? "#ef4444" : temp < 0.9 ? "#60a5fa" : "#94a3b8";
+            return (
+              <div style={{ fontSize:11,padding:"6px 12px",background:"#0a0f1a",borderRadius:5,border:"1px solid #1e3a5f",marginBottom:10,display:"flex",gap:16,alignItems:"center" }}>
+                <span style={{ color:"#3b82f6" }}>⚡ Dynamic pricing active — {sold.length} sales recorded, pot ~${pot.toLocaleString()}</span>
+                <span style={{ color:tempColor,fontWeight:800 }}>Room temp: {tempLabel} ({(temp*100).toFixed(0)}% of avg)</span>
+                {allRatios.length < 2 && <span style={{ color:"#4b5563" }}>Need 2+ sales to activate price adjustments</span>}
+              </div>
+            );
+          })()}
+
+          <div style={{ overflowX:"auto" }}>
+            <table style={{ width:"100%",borderCollapse:"collapse",fontSize:13 }}>
+              <thead>
+                <tr style={{ background:"#0a0a1a",borderBottom:"2px solid #141428" }}>
+                  {["Seed","Team","Region","R1%","R2%","S16%","E8%","F4%","Champ%","Exp $","Price Range","Max Bid","Surplus","Rating",""].map(h=>(
+                    <th key={h} style={{ padding:"7px 9px",textAlign:"left",fontSize:9,color:"#374151",letterSpacing:".1em",textTransform:"uppercase",fontWeight:800,whiteSpace:"nowrap" }}>{h}</th>
+                  ))}
+                  {showSold && <th style={{ padding:"7px 9px",textAlign:"left",fontSize:9,color:"#374151",letterSpacing:".1em",textTransform:"uppercase",fontWeight:800 }}>SOLD TO</th>}
+                  {showSold && <th style={{ padding:"7px 9px",fontSize:9,color:"#374151",letterSpacing:".1em",textTransform:"uppercase",fontWeight:800 }}>UNDO</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {/* ── Unsold teams ── */}
+                {tableTeams.map((t,i) => {
+                  const rc = RC[t.rating] || RC["FAIR"];
+                  return (
+                    <tr key={t.team+i} className="tr" style={{ background:i%2===0?"#0a0a14":"#070711",borderBottom:"1px solid #0f0f1d" }}>
+                      <td style={{ padding:"7px 9px" }}>
+                        <span style={{ background:"#1a2744",color:"#60a5fa",fontSize:10,fontWeight:800,padding:"2px 6px",borderRadius:4 }}>{t.seed}</span>
+                      </td>
+                      <td style={{ padding:"7px 9px",fontWeight:700,color:"#f1f5f9",whiteSpace:"nowrap" }}>
+                        {t.bluBlood&&<span style={{ color:"#f59e0b",marginRight:3,fontSize:11 }}>★</span>}
+                        {t.team}
+                        {t.playIn&&<span style={{ marginLeft:4,fontSize:9,color:"#4b5563" }}>▶</span>}
+                      </td>
+                      <td style={{ padding:"7px 9px",color:"#4b5563",fontSize:11 }}>{t.region}</td>
+                      <td style={{ padding:"7px 9px",color:"#94a3b8",fontSize:12 }}>{(t.r1*100).toFixed(0)}%</td>
+                      <td style={{ padding:"7px 9px",color:"#94a3b8",fontSize:12 }}>{(t.r2*100).toFixed(0)}%</td>
+                      <td style={{ padding:"7px 9px",color:"#94a3b8",fontSize:12 }}>{(t.s16*100).toFixed(0)}%</td>
+                      <td style={{ padding:"7px 9px",color:"#94a3b8",fontSize:12 }}>{(t.e8*100).toFixed(1)}%</td>
+                      <td style={{ padding:"7px 9px",color:"#94a3b8",fontSize:12 }}>{(t.f4*100).toFixed(1)}%</td>
+                      <td style={{ padding:"7px 9px",color:"#94a3b8",fontSize:12 }}>{(t.champ*100).toFixed(1)}%</td>
+                      <td style={{ padding:"7px 9px",color:"#4ade80",fontWeight:800 }}>${t.ev}</td>
+                      <td style={{ padding:"7px 9px",color:"#6b7280",fontSize:11,whiteSpace:"nowrap" }}>${t.priceLow}–${t.priceHigh}</td>
+                      <td style={{ padding:"7px 9px",color:"#f59e0b",fontWeight:800 }}>${t.maxBid}</td>
+                      <td style={{ padding:"7px 9px",fontWeight:700,color:t.surplus>0?"#4ade80":"#ef4444" }}>
+                        {t.surplus>0?"+":""}${t.surplus}
+                      </td>
+                      <td style={{ padding:"7px 9px" }}>
+                        <span style={{ background:rc.bg,border:`1px solid ${rc.border}`,color:rc.text,padding:"2px 7px",borderRadius:4,fontSize:9,fontWeight:800,letterSpacing:".05em",whiteSpace:"nowrap" }}>
+                          {t.rating}
+                        </span>
+                      </td>
+                      <td style={{ padding:"7px 9px" }}>
+                        <button className="bb" onClick={()=>setModal(t)}>BID</button>
+                      </td>
+                      {showSold && <td/>}
+                      {showSold && <td/>}
+                    </tr>
+                  );
+                })}
+                {/* ── Sold teams (faded, with undo) — only when showSold is on ── */}
+                {showSold && sold
+                  .filter(s => {
+                    if (seedF !== "all" && s.team.seed !== parseInt(seedF)) return false;
+                    if (search && !s.team.team.toLowerCase().includes(search.toLowerCase())) return false;
+                    return true;
+                  })
+                  .map((s, saleIdx) => {
+                    const t = s.team;
+                    return (
+                      <tr key={`sold-${t.team}-${saleIdx}`} style={{ background:"#0a0a0a",borderBottom:"1px solid #0f0f1d",opacity:0.45 }}>
+                        <td style={{ padding:"7px 9px" }}>
+                          <span style={{ background:"#1a1a1a",color:"#4b5563",fontSize:10,fontWeight:800,padding:"2px 6px",borderRadius:4 }}>{t.seed}</span>
+                        </td>
+                        <td style={{ padding:"7px 9px",fontWeight:700,color:"#4b5563",whiteSpace:"nowrap" }}>
+                          {t.bluBlood&&<span style={{ color:"#6b5000",marginRight:3,fontSize:11 }}>★</span>}
+                          {t.team}
+                          {t.playIn&&<span style={{ marginLeft:4,fontSize:9 }}>▶</span>}
+                          <span style={{ marginLeft:6,fontSize:10,color:"#374151",fontStyle:"italic" }}>SOLD</span>
+                        </td>
+                        <td style={{ padding:"7px 9px",color:"#374151",fontSize:11 }}>{t.region}</td>
+                        <td style={{ padding:"7px 9px",color:"#374151",fontSize:12 }}>{(t.r1*100).toFixed(0)}%</td>
+                        <td style={{ padding:"7px 9px",color:"#374151",fontSize:12 }}>{(t.r2*100).toFixed(0)}%</td>
+                        <td style={{ padding:"7px 9px",color:"#374151",fontSize:12 }}>{(t.s16*100).toFixed(0)}%</td>
+                        <td style={{ padding:"7px 9px",color:"#374151",fontSize:12 }}>{(t.e8*100).toFixed(1)}%</td>
+                        <td style={{ padding:"7px 9px",color:"#374151",fontSize:12 }}>{(t.f4*100).toFixed(1)}%</td>
+                        <td style={{ padding:"7px 9px",color:"#374151",fontSize:12 }}>{(t.champ*100).toFixed(1)}%</td>
+                        <td style={{ padding:"7px 9px",color:"#374151",fontWeight:800 }}>—</td>
+                        <td style={{ padding:"7px 9px",color:"#374151",fontSize:11 }}>—</td>
+                        <td style={{ padding:"7px 9px",color:"#374151" }}>—</td>
+                        <td style={{ padding:"7px 9px",color:"#374151" }}>—</td>
+                        <td style={{ padding:"7px 9px" }}>
+                          <span style={{ background:"#1a1a1a",border:"1px solid #2d3748",color:"#4b5563",padding:"2px 7px",borderRadius:4,fontSize:9,fontWeight:800 }}>SOLD</span>
+                        </td>
+                        <td style={{ padding:"7px 9px" }}/>
+                        <td style={{ padding:"7px 9px",color:"#f59e0b",fontWeight:700,fontSize:12,whiteSpace:"nowrap" }}>
+                          ${s.price} → {s.buyer}
+                        </td>
+                        <td style={{ padding:"7px 9px" }}>
+                          <button
+                            onClick={()=>handleUndo(s.fbKey, s)}
+                            style={{ cursor:"pointer",padding:"3px 8px",border:"1px solid #7f1d1d",borderRadius:4,background:"transparent",color:"#ef4444",fontSize:11,fontWeight:800,fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:".04em",transition:"all .12s" }}
+                            onMouseEnter={e=>{e.target.style.background="#7f1d1d";e.target.style.color="#fff";}}
+                            onMouseLeave={e=>{e.target.style.background="transparent";e.target.style.color="#ef4444";}}
+                          >↩ UNDO</button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── MY TEAMS ───────────────────────────────────────────────────── */}
+      {tab==="mine" && (
+        <div style={{ padding:"18px 24px" }}>
+          {myTeams.length===0 ? (
+            <div style={{ textAlign:"center",padding:"60px 0",color:"#374151" }}>
+              <div style={{ fontSize:44,marginBottom:12 }}>🏀</div>
+              <div style={{ fontSize:16,fontWeight:700 }}>No teams yet — go record your bids.</div>
+            </div>
+          ) : (
+            <>
+              <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:10,marginBottom:18 }}>
+                {[
+                  { l:"Total Spent",  v:`$${mySpent.toLocaleString()}`,  c:"#f1f5f9" },
+                  { l:"Exp. Return",  v:`$${myEV.toLocaleString()}`,      c:"#4ade80" },
+                  { l:"Expected P&L", v:`${myEV-mySpent>=0?"+":""}$${(myEV-mySpent).toLocaleString()}`, c:myEV>mySpent?"#4ade80":"#ef4444" },
+                  { l:"Teams Owned",  v:myTeams.length,                   c:"#60a5fa" },
+                ].map(s=>(
+                  <div key={s.l} className="card">
+                    <div style={{ fontSize:10,color:"#374151",textTransform:"uppercase",letterSpacing:".1em" }}>{s.l}</div>
+                    <div style={{ fontSize:28,fontWeight:900,color:s.c,marginTop:4 }}>{s.v}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(230px,1fr))",gap:10 }}>
+                {myTeams.map(t => {
+                  const pl = t.ev - t.pricePaid;
+                  return (
+                    <div key={t.team} style={{ background:"#0f0f1d",border:`1px solid ${pl>0?"#166534":"#7f1d1d"}`,borderRadius:10,padding:"14px 16px" }}>
+                      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10 }}>
+                        <div>
+                          <div style={{ fontSize:10,color:"#374151" }}>S{t.seed} · {t.region}</div>
+                          <div style={{ fontSize:20,fontWeight:900,color:"#f1f5f9",lineHeight:1 }}>{t.team}</div>
+                        </div>
+                        <div style={{ textAlign:"right" }}>
+                          <div style={{ fontSize:10,color:"#374151" }}>PAID</div>
+                          <div style={{ fontSize:18,fontWeight:800,color:"#f59e0b" }}>${t.pricePaid}</div>
+                        </div>
+                      </div>
+                      <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6 }}>
+                        {[
+                          { l:"Exp Return",v:`$${t.ev}`,c:"#4ade80" },
+                          { l:"Champ%",    v:`${(t.champ*100).toFixed(1)}%`,c:"#60a5fa" },
+                          { l:"P&L",       v:`${pl>=0?"+":""}$${pl}`,c:pl>=0?"#4ade80":"#ef4444" },
+                        ].map(s=>(
+                          <div key={s.l} style={{ background:"#070711",borderRadius:5,padding:"6px 8px",textAlign:"center" }}>
+                            <div style={{ fontSize:9,color:"#374151",textTransform:"uppercase" }}>{s.l}</div>
+                            <div style={{ fontSize:14,fontWeight:800,color:s.c }}>{s.v}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── COMPETITORS ────────────────────────────────────────────────── */}
+      {tab==="comps" && (
+        <div style={{ padding:"18px 24px" }}>
+          <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(250px,1fr))",gap:12,marginBottom:16 }}>
+            {comps.map(c => {
+              const remain = BUDGET - c.spent;
+              const pct = Math.min(100,(c.spent/BUDGET)*100);
+              const nearLockout = !c.locked && remain < 400 && remain > 0;
+              return (
+                <div key={c.id} style={{ background:"#0f0f1d",border:`1px solid ${c.locked?"#7f1d1d":nearLockout?"#854d0e":"#1a1a2e"}`,borderRadius:10,padding:"14px 16px",opacity:c.locked?.7:1 }}>
+                  <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
+                    <div>
+                      <div style={{ fontSize:16,fontWeight:800,color:c.locked?"#4b5563":"#f1f5f9" }}>{c.name}</div>
+                      {c.locked && <span style={{ fontSize:9,background:"#7f1d1d",color:"#fca5a5",padding:"1px 5px",borderRadius:3,fontWeight:800 }}>LOCKED OUT</span>}
+                      {nearLockout && <span style={{ fontSize:9,background:"#78350f",color:"#fbbf24",padding:"1px 5px",borderRadius:3,fontWeight:800 }}>⚡ NEAR LOCKOUT</span>}
+                    </div>
+                    <div style={{ width:10,height:10,borderRadius:"50%",background:c.color }} />
+                  </div>
+                  <div style={{ marginBottom:8 }}>
+                    <div style={{ display:"flex",justifyContent:"space-between",marginBottom:3 }}>
+                      <span style={{ fontSize:10,color:"#374151" }}>Spent</span>
+                      <span style={{ fontSize:12,fontWeight:800,color:c.locked?"#ef4444":pct>80?"#f59e0b":"#94a3b8" }}>${c.spent} / $2,500</span>
+                    </div>
+                    <div style={{ height:4,background:"#141428",borderRadius:2 }}>
+                      <div style={{ width:`${pct}%`,height:"100%",borderRadius:2,background:c.locked?"#ef4444":pct>80?"#f59e0b":c.color,transition:"width .4s" }} />
+                    </div>
+                  </div>
+                  <div style={{ display:"flex",justifyContent:"space-between",fontSize:11,color:"#374151",marginBottom:8 }}>
+                    <span>{c.teams.length} teams owned</span>
+                    <span style={{ color:nearLockout?"#f59e0b":"#374151" }}>${Math.max(0,remain)} remaining</span>
+                  </div>
+                  {c.teams.length > 0 && (
+                    <div style={{ display:"flex",flexWrap:"wrap",gap:3 }}>
+                      {c.teams.map(t=>(
+                        <span key={t.team} style={{ background:"#141428",color:"#6b7280",fontSize:10,padding:"1px 5px",borderRadius:3 }}>
+                          S{t.seed} {t.team} <span style={{ color:"#374151" }}>${t.pricePaid}</span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {nearLockout && (
+                    <div style={{ marginTop:8,fontSize:11,color:"#f59e0b",background:"#1a0f00",padding:"5px 8px",borderRadius:4,lineHeight:1.4 }}>
+                      Push them over $2,500 on their next bid? Only if you'd be happy to own that team.
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Budget warfare intel */}
+          <div className="card" style={{ borderColor:"#1e3a5f" }}>
+            <div style={{ fontSize:11,color:"#60a5fa",fontWeight:800,letterSpacing:".08em",textTransform:"uppercase",marginBottom:10 }}>🎯 Budget Warfare Intelligence</div>
+            <div style={{ fontSize:13,color:"#6b7280",lineHeight:1.7 }}>
+              <strong style={{ color:"#f1f5f9" }}>Historical lockout rate:</strong> 37% of groups per year (6 of 16 in 2024–2025). Expect 2–3 lockouts.
+              Each lockout competitor <strong style={{ color:"#4ade80" }}>reduces 1-seed competition and drops clearing prices $100–$300</strong>.{" "}
+              <strong style={{ color:"#f1f5f9" }}>Optimal play:</strong> If a competitor has spent ~$2,100–$2,200 and is bidding on a 3/4-seed at $300+, push them to $2,550.
+              They're locked out and you either win a good team or eliminate a rival.
+              <strong style={{ color:"#ef4444" }}> Never push them on a team you don't want to own.</strong>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── INTEL ──────────────────────────────────────────────────────── */}
+      {tab==="intel" && (
+        <div style={{ padding:"18px 24px" }}>
+          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14 }}>
+            {/* ROI chart */}
+            <div className="card">
+              <div style={{ fontSize:11,color:"#f59e0b",fontWeight:800,letterSpacing:".08em",textTransform:"uppercase",marginBottom:12 }}>Historical ROI by Seed (2024–2025)</div>
+              {Object.entries(SEED_HIST).sort((a,b)=>b[1].roi-a[1].roi).map(([s,d])=>(
+                <div key={s} style={{ display:"flex",alignItems:"center",gap:8,marginBottom:5 }}>
+                  <span style={{ width:20,fontSize:10,color:"#374151",textAlign:"right" }}>S{s}</span>
+                  <div style={{ flex:1,height:12,background:"#141428",borderRadius:2,position:"relative",overflow:"hidden" }}>
+                    <div style={{ position:"absolute",top:0,bottom:0,left:"50%",width:1,background:"#2d3748" }}/>
+                    <div style={{
+                      position:"absolute",height:"100%",
+                      left:d.roi>=0?"50%":`${50-Math.min(50,Math.abs(d.roi)*0.32)}%`,
+                      width:`${Math.min(50,Math.abs(d.roi)*0.32)}%`,
+                      background:d.roi>=0?"#16a34a":"#dc2626",borderRadius:2
+                    }}/>
+                  </div>
+                  <span style={{ width:52,fontSize:11,fontWeight:800,textAlign:"right",color:d.roi>=0?"#4ade80":"#ef4444" }}>{d.roiLabel}</span>
+                  <span style={{ width:55,fontSize:10,color:"#374151",textAlign:"right" }}>${d.avg} avg</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Payout table */}
+            <div className="card">
+              <div style={{ fontSize:11,color:"#f59e0b",fontWeight:800,letterSpacing:".08em",textTransform:"uppercase",marginBottom:12 }}>Payout Structure (~${pot.toLocaleString()} pot)</div>
+              {[
+                { l:"Champion (6 wins)", v:Math.round(pot*(.042+.035+.028+.020+.016+.010)), c:"#f59e0b" },
+                { l:"Final Four (5 wins)",v:Math.round(pot*(.035+.028+.020+.016+.010)),      c:"#60a5fa" },
+                { l:"Elite Eight (4 wins)",v:Math.round(pot*(.028+.020+.016+.010)),           c:"#a78bfa" },
+                { l:"Sweet 16 (3 wins)",  v:Math.round(pot*(.020+.016+.010)),                 c:"#4ade80" },
+                { l:"Round 2 (2 wins)",   v:Math.round(pot*(.016+.010)),                      c:"#94a3b8" },
+                { l:"Round 1 only",       v:Math.round(pot*.010),                             c:"#6b7280" },
+                { l:"Biggest Upset",      v:Math.round(pot*.020),                             c:"#fb923c" },
+                { l:"Biggest Blowout",    v:Math.round(pot*.020),                             c:"#fb923c" },
+              ].map(p=>(
+                <div key={p.l} style={{ display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #141428" }}>
+                  <span style={{ fontSize:13,color:"#6b7280" }}>{p.l}</span>
+                  <span style={{ fontSize:16,fontWeight:800,color:p.c }}>${p.v.toLocaleString()}</span>
+                </div>
+              ))}
+              <div style={{ marginTop:10,fontSize:11,color:"#374151",background:"#070711",padding:"8px 10px",borderRadius:5,lineHeight:1.6 }}>
+                Key: A Round 2 exit ($491) barely covers avg 3-seed ($527). Sweet 16 ($869) needed to profit on avg 2-seed ($781). Only Final 4+ guarantees profit on 1-seeds at avg prices.
+              </div>
+            </div>
+          </div>
+
+          {/* Auction log */}
+          {sold.length > 0 && (() => {
+            // Compute room temp for display
+            const allRatios = sold.map(s => {
+              const h = SEED_HIST[s.team.seed];
+              return h ? s.price / h.avg : 1;
+            });
+            const temp = allRatios.length ? allRatios.reduce((a,b)=>a+b,0)/allRatios.length : 1;
+            const tempLabel = temp > 1.12 ? "🔥 HOT ROOM" : temp < 0.9 ? "🧊 COLD ROOM" : "😐 NORMAL ROOM";
+            const tempColor = temp > 1.12 ? "#ef4444" : temp < 0.9 ? "#60a5fa" : "#94a3b8";
+            return (
+              <div className="card">
+                <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12 }}>
+                  <div style={{ fontSize:11,color:"#f59e0b",fontWeight:800,letterSpacing:".08em",textTransform:"uppercase" }}>
+                    Auction Log ({sold.length} teams sold)
+                  </div>
+                  <div style={{ display:"flex",alignItems:"center",gap:12 }}>
+                    <div style={{ fontSize:11,color:"#4b5563" }}>Pot projection: <span style={{ color:"#f59e0b",fontWeight:800 }}>${pot.toLocaleString()}</span></div>
+                    <div style={{ fontSize:12,fontWeight:800,color:tempColor,background:"#0a0a14",padding:"3px 10px",borderRadius:5,border:`1px solid ${tempColor}33` }}>
+                      {tempLabel} — {(temp*100).toFixed(0)}% of avg
+                    </div>
+                  </div>
+                </div>
+                {/* Per-seed temperature breakdown */}
+                {Object.keys(
+                  sold.reduce((acc,s) => { acc[s.team.seed]=true; return acc; }, {})
+                ).sort((a,b)=>a-b).length > 1 && (
+                  <div style={{ display:"flex",gap:6,flexWrap:"wrap",marginBottom:12 }}>
+                    {Object.entries(
+                      sold.reduce((acc,s) => {
+                        const h = SEED_HIST[s.team.seed];
+                        if (!h) return acc;
+                        if (!acc[s.team.seed]) acc[s.team.seed] = [];
+                        acc[s.team.seed].push(s.price / h.avg);
+                        return acc;
+                      }, {})
+                    ).sort((a,b)=>a[0]-b[0]).map(([seed, ratios]) => {
+                      const r = ratios.reduce((a,b)=>a+b,0)/ratios.length;
+                      const c = r > 1.12 ? "#ef4444" : r < 0.9 ? "#60a5fa" : "#94a3b8";
+                      return (
+                        <div key={seed} style={{ background:"#0a0a14",border:`1px solid ${c}44`,borderRadius:5,padding:"4px 8px",textAlign:"center" }}>
+                          <div style={{ fontSize:9,color:"#374151" }}>SEED {seed}</div>
+                          <div style={{ fontSize:12,fontWeight:800,color:c }}>{(r*100).toFixed(0)}%</div>
+                        </div>
+                      );
+                    })}
+                    <div style={{ alignSelf:"center",fontSize:10,color:"#374151",marginLeft:4 }}>of historical avg — updates all unsold price ranges</div>
+                  </div>
+                )}
+                <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(195px,1fr))",gap:6 }}>
+                  {sold.map((s,i)=>{
+                    const hist = SEED_HIST[s.team.seed];
+                    const vsAvg = hist ? s.price - hist.avg : 0;
+                    return (
+                      <div key={i} style={{ background:"#070711",borderRadius:6,padding:"7px 10px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
+                        <div>
+                          <span style={{ fontSize:10,color:"#374151",marginRight:5 }}>S{s.team.seed}</span>
+                          <span style={{ fontSize:13,fontWeight:700,color:"#e2e8f0" }}>{s.team.team}</span>
+                          <div style={{ fontSize:10,color:"#374151" }}>{s.buyer}</div>
+                        </div>
+                        <div style={{ textAlign:"right" }}>
+                          <div style={{ fontSize:14,fontWeight:800,color:"#f59e0b" }}>${s.price}</div>
+                          <div style={{ fontSize:9,color:vsAvg>0?"#ef4444":"#4ade80" }}>
+                            {vsAvg>0?"+":""}${vsAvg} vs avg
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+    // Wait for Firebase to load before mounting
+    function mount() {
+      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    }
+
+    if (window._firebaseReady) {
+      mount();
+    } else {
+      document.addEventListener("firebase-ready", mount);
+    }
+  </script>
+</body>
+</html>
