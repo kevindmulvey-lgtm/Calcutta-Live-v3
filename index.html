@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -84,163 +84,163 @@ const TAGS = {
 //         notes, tag, playIn, bluBlood
 const TEAMS = [
   // ── 1-SEEDS ──────────────────────────────────────────────────────────────
-  { seed:1,  team:"Duke",            region:"East",    r1:.99, r2:.88, s16:.68, e8:.52, f4:.38, champ:.22, upsetEV:0,  blowoutEV:0,  expPayout:1420, priceLow:1150, priceHigh:1400, rating:"BUY",      maxBid:1200, walkAway:1300, tag:TAGS.VALUE,    playIn:false, bluBlood:true,
+  { seed:1,  team:"Duke",            region:"East",    r1:.99, r2:.88, s16:.68, e8:.52, f4:.38, champ:.22, upsetProb:0.000000,  blowoutProb:0.000000,  expPayout:1420, priceLow:1150, priceHigh:1400, rating:"BUY",      maxBid:1200, walkAway:1300, tag:TAGS.VALUE,    playIn:false, bluBlood:true,
     notes:"KenPom #1 overall, Cameron Boozer. Brand premium will push $1,300+. Brutal East region (UConn, MSU, Kansas). Walk away above $1,200." },
-  { seed:1,  team:"Michigan",        region:"Midwest", r1:.99, r2:.90, s16:.72, e8:.55, f4:.40, champ:.23, upsetEV:0,  blowoutEV:0,  expPayout:1480, priceLow:1100, priceHigh:1350, rating:"GREAT BUY",maxBid:1200, walkAway:1250, tag:TAGS.PRIORITY, playIn:false, bluBlood:true,
+  { seed:1,  team:"Michigan",        region:"Midwest", r1:.99, r2:.90, s16:.72, e8:.55, f4:.40, champ:.23, upsetProb:0.000000,  blowoutProb:0.000000,  expPayout:1480, priceLow:1100, priceHigh:1350, rating:"GREAT BUY",maxBid:1200, walkAway:1250, tag:TAGS.PRIORITY, playIn:false, bluBlood:true,
     notes:"#1 PRIORITY. KenPom #2, Def #1. Softest 1-seed region. Slightly cheaper than Duke. If under $1,150, best pick in the auction." },
-  { seed:1,  team:"Arizona",         region:"West",    r1:.99, r2:.88, s16:.70, e8:.54, f4:.38, champ:.20, upsetEV:0,  blowoutEV:0,  expPayout:1390, priceLow:1050, priceHigh:1300, rating:"BUY",      maxBid:1150, walkAway:1200, tag:TAGS.VALUE,    playIn:false, bluBlood:false,
+  { seed:1,  team:"Arizona",         region:"West",    r1:.99, r2:.88, s16:.70, e8:.54, f4:.38, champ:.20, upsetProb:0.000000,  blowoutProb:0.000000,  expPayout:1390, priceLow:1050, priceHigh:1300, rating:"BUY",      maxBid:1150, walkAway:1200, tag:TAGS.VALUE,    playIn:false, bluBlood:false,
     notes:"KenPom #3, 30-2, Big 12 champ. Steady but no Sweet 16 in a decade. Fair value $1,050–$1,150. Backup if Michigan and Florida go too high." },
-  { seed:1,  team:"Florida",         region:"South",   r1:.98, r2:.84, s16:.62, e8:.42, f4:.28, champ:.14, upsetEV:0,  blowoutEV:0,  expPayout:1060, priceLow:900,  priceHigh:1100, rating:"GREAT BUY",maxBid:1050, walkAway:1100, tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
+  { seed:1,  team:"Florida",         region:"South",   r1:.98, r2:.84, s16:.62, e8:.42, f4:.28, champ:.14, upsetProb:0.000000,  blowoutProb:0.000000,  expPayout:1060, priceLow:900,  priceHigh:1100, rating:"GREAT BUY",maxBid:1050, walkAway:1100, tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
     notes:"PRIORITY. Defending champion but SEC semi loss to Vandy deflates buzz. Cheapest 1-seed. At $900–$1,000 this is the highest-ROI 1-seed purchase." },
 
   // ── 2-SEEDS ──────────────────────────────────────────────────────────────
-  { seed:2,  team:"Houston",         region:"South",   r1:.97, r2:.80, s16:.58, e8:.40, f4:.25, champ:.12, upsetEV:0,  blowoutEV:0,  expPayout:940,  priceLow:800,  priceHigh:1000, rating:"OVERPRICED",maxBid:750,  walkAway:850,  tag:TAGS.TRAP,     playIn:false, bluBlood:false,
+  { seed:2,  team:"Houston",         region:"South",   r1:.97, r2:.80, s16:.58, e8:.40, f4:.25, champ:.12, upsetProb:0.000000,  blowoutProb:0.000000,  expPayout:940,  priceLow:800,  priceHigh:1000, rating:"OVERPRICED",maxBid:750,  walkAway:850,  tag:TAGS.TRAP,     playIn:false, bluBlood:false,
     notes:"TRAP #2. Room treats as a 1-seed ($900+). Big 12 bias. -20% 2-seed ROI. In Florida's region. Let someone else overpay. Only consider under $750." },
-  { seed:2,  team:"UConn",           region:"East",    r1:.96, r2:.76, s16:.48, e8:.32, f4:.18, champ:.09, upsetEV:0,  blowoutEV:0,  expPayout:730,  priceLow:750,  priceHigh:950,  rating:"OVERPRICED",maxBid:700,  walkAway:800,  tag:TAGS.TRAP,     playIn:false, bluBlood:true,
+  { seed:2,  team:"UConn",           region:"East",    r1:.96, r2:.76, s16:.48, e8:.32, f4:.18, champ:.09, upsetProb:0.000000,  blowoutProb:0.000000,  expPayout:730,  priceLow:750,  priceHigh:950,  rating:"OVERPRICED",maxBid:700,  walkAway:800,  tag:TAGS.TRAP,     playIn:false, bluBlood:true,
     notes:"TRAP. 2023/2024 champion brand. KenPom #12. Lost Big East final. Brutal East region with Duke. Sells $800+ on nostalgia. Under $700 only." },
-  { seed:2,  team:"Iowa State",      region:"Midwest", r1:.96, r2:.78, s16:.52, e8:.34, f4:.18, champ:.08, upsetEV:0,  blowoutEV:0,  expPayout:720,  priceLow:700,  priceHigh:850,  rating:"FAIR",      maxBid:750,  walkAway:850,  tag:TAGS.LOTTERY,  playIn:false, bluBlood:false,
+  { seed:2,  team:"Iowa State",      region:"Midwest", r1:.96, r2:.78, s16:.52, e8:.34, f4:.18, champ:.08, upsetProb:0.000000,  blowoutProb:0.000000,  expPayout:720,  priceLow:700,  priceHigh:850,  rating:"FAIR",      maxBid:750,  walkAway:850,  tag:TAGS.LOTTERY,  playIn:false, bluBlood:false,
     notes:"Most fairly priced 2-seed. KenPom #6, Def #4. Less brand inflation. If available $700–$750, the only 2-seed worth considering." },
-  { seed:2,  team:"Purdue",          region:"West",    r1:.95, r2:.74, s16:.48, e8:.30, f4:.16, champ:.07, upsetEV:0,  blowoutEV:0,  expPayout:650,  priceLow:650,  priceHigh:825,  rating:"FAIR",      maxBid:700,  walkAway:825,  tag:TAGS.LOTTERY,  playIn:false, bluBlood:false,
+  { seed:2,  team:"Purdue",          region:"West",    r1:.95, r2:.74, s16:.48, e8:.30, f4:.16, champ:.07, upsetProb:0.000000,  blowoutProb:0.000000,  expPayout:650,  priceLow:650,  priceHigh:825,  rating:"FAIR",      maxBid:700,  walkAway:825,  tag:TAGS.LOTTERY,  playIn:false, bluBlood:false,
     notes:"Big Ten tourney champ, KenPom #8, Off #2. But Def #36 = wild variance. At $650–$700, acceptable opportunistic buy." },
 
   // ── 3-SEEDS ──────────────────────────────────────────────────────────────
-  { seed:3,  team:"Michigan State",  region:"East",    r1:.95, r2:.68, s16:.42, e8:.28, f4:.15, champ:.07, upsetEV:0,  blowoutEV:0,  expPayout:580,  priceLow:525,  priceHigh:625,  rating:"FAIR",      maxBid:500,  walkAway:550,  tag:TAGS.AVOID,    playIn:false, bluBlood:true,
+  { seed:3,  team:"Michigan State",  region:"East",    r1:.95, r2:.68, s16:.42, e8:.28, f4:.15, champ:.07, upsetProb:0.000000,  blowoutProb:0.000000,  expPayout:580,  priceLow:525,  priceHigh:625,  rating:"FAIR",      maxBid:500,  walkAway:550,  tag:TAGS.AVOID,    playIn:false, bluBlood:true,
     notes:"OVERPRICED #10. KenPom #9 but in Duke's brutal East region. Big Ten bias inflates -24.2% 3-seed ROI. Walk away above $550." },
-  { seed:3,  team:"Illinois",        region:"South",   r1:.94, r2:.72, s16:.48, e8:.30, f4:.16, champ:.08, upsetEV:0,  blowoutEV:0,  expPayout:630,  priceLow:500,  priceHigh:600,  rating:"BUY",       maxBid:550,  walkAway:580,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
+  { seed:3,  team:"Illinois",        region:"South",   r1:.94, r2:.72, s16:.48, e8:.30, f4:.16, champ:.08, upsetProb:0.000000,  blowoutProb:0.000000,  expPayout:630,  priceLow:500,  priceHigh:600,  rating:"BUY",       maxBid:550,  walkAway:580,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
     notes:"PRIORITY #5. KenPom #7, #1 offense in country. +1900 odds. Best 3-seed value. R2 opponent likely UNC (missing Caleb Wilson). At $500–$540, breaks the -24.2% trend." },
-  { seed:3,  team:"Virginia",        region:"Midwest", r1:.94, r2:.68, s16:.42, e8:.26, f4:.12, champ:.05, upsetEV:0,  blowoutEV:0,  expPayout:500,  priceLow:475,  priceHigh:575,  rating:"FAIR",      maxBid:500,  walkAway:575,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:3,  team:"Virginia",        region:"Midwest", r1:.94, r2:.68, s16:.42, e8:.26, f4:.12, champ:.05, upsetProb:0.000000,  blowoutProb:0.000000,  expPayout:500,  priceLow:475,  priceHigh:575,  rating:"FAIR",      maxBid:500,  walkAway:575,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"KenPom #13, Def #16. Lost ACC final to Duke. Solid floor, limited ceiling. Fair at $475–$525." },
-  { seed:3,  team:"Gonzaga",         region:"West",    r1:.94, r2:.70, s16:.44, e8:.26, f4:.14, champ:.06, upsetEV:0,  blowoutEV:0,  expPayout:540,  priceLow:500,  priceHigh:600,  rating:"FAIR",      maxBid:500,  walkAway:580,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:3,  team:"Gonzaga",         region:"West",    r1:.94, r2:.70, s16:.44, e8:.26, f4:.14, champ:.06, upsetProb:0.000000,  blowoutProb:0.000000,  expPayout:540,  priceLow:500,  priceHigh:600,  rating:"FAIR",      maxBid:500,  walkAway:580,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"KenPom #10, March reputation. West region path through Arizona is tough. Standard 3-seed pricing. Room will overpay on brand." },
 
   // ── 4-SEEDS ──────────────────────────────────────────────────────────────
-  { seed:4,  team:"Kansas",          region:"East",    r1:.92, r2:.60, s16:.32, e8:.18, f4:.08, champ:.03, upsetEV:0,  blowoutEV:0,  expPayout:400,  priceLow:475,  priceHigh:575,  rating:"OVERPRICED",maxBid:400,  walkAway:450,  tag:TAGS.TRAP,     playIn:false, bluBlood:true,
+  { seed:4,  team:"Kansas",          region:"East",    r1:.92, r2:.60, s16:.32, e8:.18, f4:.08, champ:.03, upsetProb:0.000000,  blowoutProb:0.000000,  expPayout:400,  priceLow:475,  priceHigh:575,  rating:"OVERPRICED",maxBid:400,  walkAway:450,  tag:TAGS.TRAP,     playIn:false, bluBlood:true,
     notes:"TRAP. KenPom #21 mediocre for a 4-seed. Brand premium adds $100+. In Duke's brutal East region. Hard avoid above $450." },
-  { seed:4,  team:"Alabama",         region:"Midwest", r1:.92, r2:.62, s16:.35, e8:.20, f4:.09, champ:.04, upsetEV:0,  blowoutEV:0,  expPayout:430,  priceLow:425,  priceHigh:525,  rating:"FAIR",      maxBid:450,  walkAway:525,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:4,  team:"Alabama",         region:"Midwest", r1:.92, r2:.62, s16:.35, e8:.20, f4:.09, champ:.04, upsetProb:0.000000,  blowoutProb:0.000000,  expPayout:430,  priceLow:425,  priceHigh:525,  rating:"FAIR",      maxBid:450,  walkAway:525,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"Off #3 but Def #67 = extreme variance. KenPom #17. Room may overpay on name. Fair at $425–$450." },
-  { seed:4,  team:"Nebraska",        region:"South",   r1:.90, r2:.58, s16:.30, e8:.16, f4:.07, champ:.02, upsetEV:0,  blowoutEV:0,  expPayout:350,  priceLow:350,  priceHigh:450,  rating:"BUY",       maxBid:400,  walkAway:430,  tag:TAGS.VALUE,    playIn:false, bluBlood:false,
+  { seed:4,  team:"Nebraska",        region:"South",   r1:.90, r2:.58, s16:.30, e8:.16, f4:.07, champ:.02, upsetProb:0.000000,  blowoutProb:0.000000,  expPayout:350,  priceLow:350,  priceHigh:450,  rating:"BUY",       maxBid:400,  walkAway:430,  tag:TAGS.VALUE,    playIn:false, bluBlood:false,
     notes:"VALUE. First tournament appearance = no brand premium. KenPom #14, Def #7. +12.1% 4-seed ROI. Target $350–$400." },
-  { seed:4,  team:"Arkansas",        region:"West",    r1:.91, r2:.60, s16:.32, e8:.18, f4:.08, champ:.03, upsetEV:0,  blowoutEV:0,  expPayout:390,  priceLow:400,  priceHigh:500,  rating:"FAIR",       maxBid:450,  walkAway:520,  tag:TAGS.VALUE,    playIn:false, bluBlood:false,
+  { seed:4,  team:"Arkansas",        region:"West",    r1:.91, r2:.60, s16:.32, e8:.18, f4:.08, champ:.03, upsetProb:0.000000,  blowoutProb:0.000000,  expPayout:390,  priceLow:400,  priceHigh:500,  rating:"FAIR",       maxBid:450,  walkAway:520,  tag:TAGS.VALUE,    playIn:false, bluBlood:false,
     notes:"SEC tourney champ, 10–20% hot streak premium. KenPom #18, great offense. At $400–$450, acceptable backup." },
 
   // ── 5-SEEDS ──────────────────────────────────────────────────────────────
-  { seed:5,  team:"St. John's",      region:"East",    r1:.88, r2:.50, s16:.24, e8:.12, f4:.05, champ:.02, upsetEV:0,  blowoutEV:0,  expPayout:310,  priceLow:275,  priceHigh:350,  rating:"FAIR",      maxBid:265,  walkAway:300,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:5,  team:"St. John's",      region:"East",    r1:.88, r2:.50, s16:.24, e8:.12, f4:.05, champ:.02, upsetProb:0.022871,  blowoutProb:0.000000,  expPayout:310,  priceLow:275,  priceHigh:350,  rating:"FAIR",      maxBid:265,  walkAway:300,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"Big East tourney champ = narrative premium. KenPom #16, Def #12. But -36.6% 5-seed ROI. Walk away above $300." },
-  { seed:5,  team:"Vanderbilt",      region:"South",   r1:.88, r2:.55, s16:.28, e8:.15, f4:.08, champ:.03, upsetEV:0,  blowoutEV:0,  expPayout:370,  priceLow:260,  priceHigh:330,  rating:"GREAT BUY", maxBid:300,  walkAway:320,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
+  { seed:5,  team:"Vanderbilt",      region:"South",   r1:.88, r2:.55, s16:.28, e8:.15, f4:.08, champ:.03, upsetProb:0.022871,  blowoutProb:0.000000,  expPayout:370,  priceLow:260,  priceHigh:330,  rating:"GREAT BUY", maxBid:300,  walkAway:320,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
     notes:"PRIORITY #2. THE value team. KenPom #11, SEC tourney champ (beat Florida!), Off #7. Plays like a 3, priced as a 5. Room won't adjust for metrics. Target $260–$280." },
-  { seed:5,  team:"Wisconsin",       region:"West",    r1:.86, r2:.48, s16:.22, e8:.10, f4:.04, champ:.015,upsetEV:0,  blowoutEV:0,  expPayout:270,  priceLow:250,  priceHigh:320,  rating:"FAIR",      maxBid:255,  walkAway:310,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:5,  team:"Wisconsin",       region:"West",    r1:.86, r2:.48, s16:.22, e8:.10, f4:.04, champ:.015,upsetProb:0.022351,  blowoutProb:0.000000,  expPayout:270,  priceLow:250,  priceHigh:320,  rating:"FAIR",      maxBid:255,  walkAway:310,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"KenPom #22, Off #11. In Arizona's region. Standard 5-seed. Room inflation risk." },
-  { seed:5,  team:"Texas Tech",      region:"Midwest", r1:.87, r2:.50, s16:.24, e8:.12, f4:.05, champ:.02, upsetEV:0,  blowoutEV:0,  expPayout:300,  priceLow:260,  priceHigh:330,  rating:"FAIR",      maxBid:260,  walkAway:310,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:5,  team:"Texas Tech",      region:"Midwest", r1:.87, r2:.50, s16:.24, e8:.12, f4:.05, champ:.02, upsetProb:0.022611,  blowoutProb:0.000000,  expPayout:300,  priceLow:260,  priceHigh:330,  rating:"FAIR",      maxBid:260,  walkAway:310,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"KenPom #20, Off #12. Nice profile but 5-seed pricing makes marginal. -36.6% ROI." },
 
   // ── 6-SEEDS ──────────────────────────────────────────────────────────────
-  { seed:6,  team:"Louisville",      region:"East",    r1:.84, r2:.42, s16:.18, e8:.08, f4:.03, champ:.01, upsetEV:0,  blowoutEV:0,  expPayout:250,  priceLow:240,  priceHigh:300,  rating:"BUY",       maxBid:260,  walkAway:275,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
+  { seed:6,  team:"Louisville",      region:"East",    r1:.84, r2:.42, s16:.18, e8:.08, f4:.03, champ:.01, upsetProb:0.021831,  blowoutProb:0.000000,  expPayout:250,  priceLow:240,  priceHigh:300,  rating:"BUY",       maxBid:260,  walkAway:275,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
     notes:"PRIORITY #10. KenPom #19, balanced Off #20/Def #25. Second straight tourney = buzz but not overheated. Faces South Florida R1. +16% 6-seed ROI. Target $240–$260." },
-  { seed:6,  team:"North Carolina",  region:"South",   r1:.82, r2:.40, s16:.16, e8:.07, f4:.025,champ:.01, upsetEV:0,  blowoutEV:0,  expPayout:230,  priceLow:280,  priceHigh:360,  rating:"OVERPRICED",maxBid:200,  walkAway:220,  tag:TAGS.TRAP,     playIn:false, bluBlood:true,
+  { seed:6,  team:"North Carolina",  region:"South",   r1:.82, r2:.40, s16:.16, e8:.07, f4:.025,champ:.01, upsetProb:0.021311,  blowoutProb:0.000000,  expPayout:230,  priceLow:280,  priceHigh:360,  rating:"OVERPRICED",maxBid:200,  walkAway:220,  tag:TAGS.TRAP,     playIn:false, bluBlood:true,
     notes:"TRAP #4. Star Caleb Wilson OUT (hand surgery). KenPom #29 without him. UNC brand = $300+ regardless. Walk away. Under $200 only." },
-  { seed:6,  team:"Tennessee",       region:"Midwest", r1:.83, r2:.42, s16:.18, e8:.08, f4:.03, champ:.01, upsetEV:0,  blowoutEV:0,  expPayout:250,  priceLow:230,  priceHigh:290,  rating:"BUY",       maxBid:260,  walkAway:275,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
+  { seed:6,  team:"Tennessee",       region:"Midwest", r1:.83, r2:.42, s16:.18, e8:.08, f4:.03, champ:.01, upsetProb:0.021571,  blowoutProb:0.000000,  expPayout:250,  priceLow:230,  priceHigh:290,  rating:"BUY",       maxBid:260,  walkAway:275,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
     notes:"PRIORITY #7. KenPom #15, Def #15. Quiet value. Flies under radar in Midwest room. Historical 6-seed ROI +16%. Target $230–$260." },
-  { seed:6,  team:"BYU",             region:"West",    r1:.82, r2:.40, s16:.16, e8:.07, f4:.025,champ:.01, upsetEV:0,  blowoutEV:0,  expPayout:230,  priceLow:220,  priceHigh:280,  rating:"FAIR",      maxBid:240,  walkAway:275,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:6,  team:"BYU",             region:"West",    r1:.82, r2:.40, s16:.16, e8:.07, f4:.025,champ:.01, upsetProb:0.021311,  blowoutProb:0.000000,  expPayout:230,  priceLow:220,  priceHigh:280,  rating:"FAIR",      maxBid:240,  walkAway:275,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"High-octane Off #10, but Def #57 = entertaining and volatile. Fair at $220–$260." },
 
   // ── 7-SEEDS (AVOID TIER) ─────────────────────────────────────────────────
-  { seed:7,  team:"UCLA",            region:"East",    r1:.72, r2:.30, s16:.12, e8:.05, f4:.02, champ:.005,upsetEV:0,  blowoutEV:0,  expPayout:175,  priceLow:210,  priceHigh:260,  rating:"AVOID",     maxBid:180,  walkAway:200,  tag:TAGS.AVOID,    playIn:false, bluBlood:true,
+  { seed:7,  team:"UCLA",            region:"East",    r1:.72, r2:.30, s16:.12, e8:.05, f4:.02, champ:.005,upsetProb:0.028069,  blowoutProb:0.000000,  expPayout:175,  priceLow:210,  priceHigh:260,  rating:"AVOID",     maxBid:180,  walkAway:200,  tag:TAGS.AVOID,    playIn:false, bluBlood:true,
     notes:"AVOID. KenPom #27. Brand drives bidding above seed value. -45.9% 7-seed ROI. Walk away above $200." },
-  { seed:7,  team:"Saint Mary's",    region:"South",   r1:.70, r2:.28, s16:.11, e8:.04, f4:.015,champ:.005,upsetEV:0,  blowoutEV:0,  expPayout:165,  priceLow:190,  priceHigh:240,  rating:"AVOID",     maxBid:170,  walkAway:195,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:7,  team:"Saint Mary's",    region:"South",   r1:.70, r2:.28, s16:.11, e8:.04, f4:.015,champ:.005,upsetProb:0.027289,  blowoutProb:0.000000,  expPayout:165,  priceLow:190,  priceHigh:240,  rating:"AVOID",     maxBid:170,  walkAway:195,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"Standard 7-seed avoid. -45.9% seed ROI." },
-  { seed:7,  team:"Miami FL",        region:"West",    r1:.68, r2:.26, s16:.10, e8:.04, f4:.015,champ:.005,upsetEV:0,  blowoutEV:0,  expPayout:155,  priceLow:200,  priceHigh:250,  rating:"AVOID",     maxBid:170,  walkAway:195,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:7,  team:"Miami FL",        region:"West",    r1:.68, r2:.26, s16:.10, e8:.04, f4:.015,champ:.005,upsetProb:0.026509,  blowoutProb:0.000000,  expPayout:155,  priceLow:200,  priceHigh:250,  rating:"AVOID",     maxBid:170,  walkAway:195,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"Standard 7-seed avoid." },
-  { seed:7,  team:"Kentucky",        region:"Midwest", r1:.72, r2:.30, s16:.12, e8:.05, f4:.02, champ:.005,upsetEV:0,  blowoutEV:0,  expPayout:175,  priceLow:250,  priceHigh:330,  rating:"AVOID",     maxBid:175,  walkAway:195,  tag:TAGS.TRAP,     playIn:false, bluBlood:true,
+  { seed:7,  team:"Kentucky",        region:"Midwest", r1:.72, r2:.30, s16:.12, e8:.05, f4:.02, champ:.005,upsetProb:0.028069,  blowoutProb:0.000000,  expPayout:175,  priceLow:250,  priceHigh:330,  rating:"AVOID",     maxBid:175,  walkAway:195,  tag:TAGS.TRAP,     playIn:false, bluBlood:true,
     notes:"TRAP #1. Most dangerous trap in pool. KenPom #28 mediocre. Room will bid $280–$330. -45.9% 7-seed ROI will crush you. Never above $175." },
 
   // ── 8-SEEDS (WORST ROI TIER) ─────────────────────────────────────────────
-  { seed:8,  team:"Ohio State",      region:"East",    r1:.50, r2:.15, s16:.05, e8:.02, f4:.005,champ:.002,upsetEV:0,  blowoutEV:0,  expPayout:85,   priceLow:165,  priceHigh:210,  rating:"AVOID",     maxBid:130,  walkAway:160,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:8,  team:"Ohio State",      region:"East",    r1:.50, r2:.15, s16:.05, e8:.02, f4:.005,champ:.002,upsetProb:0.025990,  blowoutProb:0.000000,  expPayout:85,   priceLow:165,  priceHigh:210,  rating:"AVOID",     maxBid:130,  walkAway:160,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"AVOID. -62.3% 8-seed ROI. KenPom #26, Def #53. Big Ten bias in this room makes this a trap." },
-  { seed:8,  team:"Clemson",         region:"South",   r1:.48, r2:.14, s16:.04, e8:.015,f4:.005,champ:.002,upsetEV:0,  blowoutEV:0,  expPayout:80,   priceLow:155,  priceHigh:200,  rating:"AVOID",     maxBid:130,  walkAway:160,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:8,  team:"Clemson",         region:"South",   r1:.48, r2:.14, s16:.04, e8:.015,f4:.005,champ:.002,upsetProb:0.024950,  blowoutProb:0.000000,  expPayout:80,   priceLow:155,  priceHigh:200,  rating:"AVOID",     maxBid:130,  walkAway:160,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"AVOID. -62.3% 8-seed ROI. Never touch 8-seeds." },
-  { seed:8,  team:"Villanova",       region:"West",    r1:.48, r2:.14, s16:.04, e8:.015,f4:.005,champ:.002,upsetEV:0,  blowoutEV:0,  expPayout:80,   priceLow:160,  priceHigh:205,  rating:"AVOID",     maxBid:130,  walkAway:160,  tag:TAGS.AVOID,    playIn:false, bluBlood:true,
+  { seed:8,  team:"Villanova",       region:"West",    r1:.48, r2:.14, s16:.04, e8:.015,f4:.005,champ:.002,upsetProb:0.024950,  blowoutProb:0.000000,  expPayout:80,   priceLow:160,  priceHigh:205,  rating:"AVOID",     maxBid:130,  walkAway:160,  tag:TAGS.AVOID,    playIn:false, bluBlood:true,
     notes:"AVOID. Brand premium on worst-ROI seed. Never touch 8-seeds." },
-  { seed:8,  team:"Georgia",         region:"Midwest", r1:.48, r2:.14, s16:.04, e8:.015,f4:.005,champ:.002,upsetEV:0,  blowoutEV:0,  expPayout:80,   priceLow:155,  priceHigh:200,  rating:"AVOID",     maxBid:130,  walkAway:160,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:8,  team:"Georgia",         region:"Midwest", r1:.48, r2:.14, s16:.04, e8:.015,f4:.005,champ:.002,upsetProb:0.024950,  blowoutProb:0.000000,  expPayout:80,   priceLow:155,  priceHigh:200,  rating:"AVOID",     maxBid:130,  walkAway:160,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"AVOID. -62.3% 8-seed ROI. Zero exceptions for 8-seeds." },
 
   // ── 9-SEEDS ──────────────────────────────────────────────────────────────
-  { seed:9,  team:"TCU",             region:"East",    r1:.50, r2:.16, s16:.05, e8:.02, f4:.005,champ:.002,upsetEV:0,  blowoutEV:0,  expPayout:90,   priceLow:130,  priceHigh:170,  rating:"FAIR",      maxBid:130,  walkAway:165,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:9,  team:"TCU",             region:"East",    r1:.50, r2:.16, s16:.05, e8:.02, f4:.005,champ:.002,upsetProb:0.032487,  blowoutProb:0.000000,  expPayout:90,   priceLow:130,  priceHigh:170,  rating:"FAIR",      maxBid:130,  walkAway:165,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"Standard 9-seed. -22.5% ROI. Fair at $130–$150." },
-  { seed:9,  team:"Iowa",            region:"South",   r1:.52, r2:.18, s16:.06, e8:.025,f4:.01, champ:.003,upsetEV:0,  blowoutEV:0,  expPayout:105,  priceLow:140,  priceHigh:180,  rating:"FAIR",      maxBid:130,  walkAway:165,  tag:TAGS.LOTTERY,  playIn:false, bluBlood:false,
+  { seed:9,  team:"Iowa",            region:"South",   r1:.52, r2:.18, s16:.06, e8:.025,f4:.01, champ:.003,upsetProb:0.033786,  blowoutProb:0.000000,  expPayout:105,  priceLow:140,  priceHigh:180,  rating:"FAIR",      maxBid:130,  walkAway:165,  tag:TAGS.LOTTERY,  playIn:false, bluBlood:false,
     notes:"R2 could face UNC without Caleb Wilson — interesting path. At $130–$150 with favorable draw." },
-  { seed:9,  team:"Utah State",      region:"West",    r1:.52, r2:.18, s16:.06, e8:.025,f4:.01, champ:.003,upsetEV:0,  blowoutEV:0,  expPayout:105,  priceLow:125,  priceHigh:160,  rating:"BUY",       maxBid:140,  walkAway:160,  tag:TAGS.VALUE,    playIn:false, bluBlood:false,
+  { seed:9,  team:"Utah State",      region:"West",    r1:.52, r2:.18, s16:.06, e8:.025,f4:.01, champ:.003,upsetProb:0.033786,  blowoutProb:0.000000,  expPayout:105,  priceLow:125,  priceHigh:160,  rating:"BUY",       maxBid:140,  walkAway:160,  tag:TAGS.VALUE,    playIn:false, bluBlood:false,
     notes:"Best 9-seed. KenPom #30, Off #28. Faces Villanova (weaker 8-seed). At $125–$140, reasonable flier." },
-  { seed:9,  team:"St. Louis",       region:"Midwest", r1:.52, r2:.16, s16:.05, e8:.02, f4:.005,champ:.002,upsetEV:0,  blowoutEV:0,  expPayout:90,   priceLow:120,  priceHigh:155,  rating:"FAIR",      maxBid:130,  walkAway:155,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:9,  team:"St. Louis",       region:"Midwest", r1:.52, r2:.16, s16:.05, e8:.02, f4:.005,champ:.002,upsetProb:0.033786,  blowoutProb:0.000000,  expPayout:90,   priceLow:120,  priceHigh:155,  rating:"FAIR",      maxBid:130,  walkAway:155,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"Standard 9-seed. A-10." },
 
   // ── 10-SEEDS ─────────────────────────────────────────────────────────────
-  { seed:10, team:"UCF",             region:"East",    r1:.42, r2:.14, s16:.04, e8:.015,f4:.005,champ:.001,upsetEV:15, blowoutEV:0,  expPayout:110,  priceLow:130,  priceHigh:165,  rating:"FAIR",      maxBid:140,  walkAway:165,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:10, team:"UCF",             region:"East",    r1:.42, r2:.14, s16:.04, e8:.015,f4:.005,champ:.001,upsetProb:0.038205, blowoutProb:0.000000,  expPayout:110,  priceLow:130,  priceHigh:165,  rating:"FAIR",      maxBid:140,  walkAway:165,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"Upset bonus potential vs Duke. Fair at $130–$150." },
-  { seed:10, team:"Texas A&M",       region:"South",   r1:.40, r2:.12, s16:.03, e8:.01, f4:.003,champ:.001,upsetEV:12, blowoutEV:0,  expPayout:95,   priceLow:130,  priceHigh:165,  rating:"FAIR",      maxBid:140,  walkAway:165,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:10, team:"Texas A&M",       region:"South",   r1:.40, r2:.12, s16:.03, e8:.01, f4:.003,champ:.001,upsetProb:0.036385, blowoutProb:0.000000,  expPayout:95,   priceLow:130,  priceHigh:165,  rating:"FAIR",      maxBid:140,  walkAway:165,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"SEC. Standard 10-seed." },
-  { seed:10, team:"Missouri",        region:"West",    r1:.40, r2:.12, s16:.04, e8:.015,f4:.005,champ:.001,upsetEV:12, blowoutEV:0,  expPayout:100,  priceLow:130,  priceHigh:160,  rating:"FAIR",      maxBid:140,  walkAway:160,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:10, team:"Missouri",        region:"West",    r1:.40, r2:.12, s16:.04, e8:.015,f4:.005,champ:.001,upsetProb:0.036385, blowoutProb:0.000000,  expPayout:100,  priceLow:130,  priceHigh:160,  rating:"FAIR",      maxBid:140,  walkAway:160,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"SEC. Standard 10-seed." },
-  { seed:10, team:"Santa Clara",     region:"Midwest", r1:.38, r2:.10, s16:.03, e8:.01, f4:.003,champ:.001,upsetEV:11, blowoutEV:0,  expPayout:85,   priceLow:120,  priceHigh:155,  rating:"FAIR",      maxBid:140,  walkAway:155,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:10, team:"Santa Clara",     region:"Midwest", r1:.38, r2:.10, s16:.03, e8:.01, f4:.003,champ:.001,upsetProb:0.034566, blowoutProb:0.000000,  expPayout:85,   priceLow:120,  priceHigh:155,  rating:"FAIR",      maxBid:140,  walkAway:155,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"WCC. Low name recognition = potential value if under $120." },
 
   // ── 11-SEEDS (PREMIUM VALUE TIER) ────────────────────────────────────────
-  { seed:11, team:"South Florida",   region:"East",    r1:.60, r2:.22, s16:.08, e8:.03, f4:.01, champ:.003,upsetEV:25, blowoutEV:0,  expPayout:155,  priceLow:140,  priceHigh:180,  rating:"GREAT BUY", maxBid:175,  walkAway:185,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
+  { seed:11, team:"South Florida",   region:"East",    r1:.60, r2:.22, s16:.08, e8:.03, f4:.01, champ:.003,upsetProb:0.077969, blowoutProb:0.000000,  expPayout:155,  priceLow:140,  priceHigh:180,  rating:"GREAT BUY", maxBid:175,  walkAway:185,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
     notes:"PRIORITY #4. American champ, momentum, faces Louisville R1. +44.7% 11-seed ROI. Must-buy at $140–$170." },
-  { seed:11, team:"VCU",             region:"South",   r1:.55, r2:.18, s16:.06, e8:.02, f4:.007,champ:.002,upsetEV:22, blowoutEV:0,  expPayout:130,  priceLow:130,  priceHigh:170,  rating:"GREAT BUY", maxBid:160,  walkAway:175,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
+  { seed:11, team:"VCU",             region:"South",   r1:.55, r2:.18, s16:.06, e8:.02, f4:.007,champ:.002,upsetProb:0.071471, blowoutProb:0.000000,  expPayout:130,  priceLow:130,  priceHigh:170,  rating:"GREAT BUY", maxBid:160,  walkAway:175,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
     notes:"PRIORITY #6. A-10 champ, faces UNC missing Caleb Wilson. Genuine upset corridor. At $130–$160, excellent value." },
-  { seed:11, team:"Texas/NC State",  region:"West",    r1:.50, r2:.14, s16:.04, e8:.015,f4:.005,champ:.001,upsetEV:18, blowoutEV:0,  expPayout:100,  priceLow:110,  priceHigh:150,  rating:"BUY",       maxBid:155,  walkAway:165,  tag:TAGS.VALUE,    playIn:true,  bluBlood:false,
+  { seed:11, team:"Texas/NC State",  region:"West",    r1:.50, r2:.14, s16:.04, e8:.015,f4:.005,champ:.001,upsetProb:0.058476, blowoutProb:0.000000,  expPayout:100,  priceLow:110,  priceHigh:150,  rating:"BUY",       maxBid:155,  walkAway:165,  tag:TAGS.VALUE,    playIn:true,  bluBlood:false,
     notes:"Play-in. NC State (2024 Final Four) is the better half. Fine lottery ticket at $100–$130." },
-  { seed:11, team:"SMU/Miami OH",    region:"Midwest", r1:.45, r2:.12, s16:.03, e8:.01, f4:.003,champ:.001,upsetEV:15, blowoutEV:0,  expPayout:85,   priceLow:100,  priceHigh:140,  rating:"BUY",       maxBid:140,  walkAway:150,  tag:TAGS.VALUE,    playIn:true,  bluBlood:false,
+  { seed:11, team:"SMU/Miami OH",    region:"Midwest", r1:.45, r2:.12, s16:.03, e8:.01, f4:.003,champ:.001,upsetProb:0.046781, blowoutProb:0.000000,  expPayout:85,   priceLow:100,  priceHigh:140,  rating:"BUY",       maxBid:140,  walkAway:150,  tag:TAGS.VALUE,    playIn:true,  bluBlood:false,
     notes:"Play-in. Lower quality half. Fine at $100–$130 as lottery ticket in best value seed tier." },
 
   // ── 12-SEEDS ─────────────────────────────────────────────────────────────
-  { seed:12, team:"Northern Iowa",   region:"East",    r1:.30, r2:.08, s16:.02, e8:.005,f4:.001,champ:0,   upsetEV:15, blowoutEV:0,  expPayout:85,   priceLow:110,  priceHigh:145,  rating:"FAIR",      maxBid:120,  walkAway:145,  tag:TAGS.LOTTERY,  playIn:false, bluBlood:false,
+  { seed:12, team:"Northern Iowa",   region:"East",    r1:.30, r2:.08, s16:.02, e8:.005,f4:.001,champ:0,   upsetProb:0.019492, blowoutProb:0.008861,  expPayout:85,   priceLow:110,  priceHigh:145,  rating:"FAIR",      maxBid:120,  walkAway:145,  tag:TAGS.LOTTERY,  playIn:false, bluBlood:false,
     notes:"Faces St. John's — classic 12-over-5 setup. Most interesting 12-seed. -33% ROI, only buy under $110." },
-  { seed:12, team:"McNeese",         region:"South",   r1:.28, r2:.07, s16:.015,e8:.005,f4:.001,champ:0,   upsetEV:14, blowoutEV:0,  expPayout:80,   priceLow:100,  priceHigh:135,  rating:"FAIR",      maxBid:120,  walkAway:140,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:12, team:"McNeese",         region:"South",   r1:.28, r2:.07, s16:.015,e8:.005,f4:.001,champ:0,   upsetProb:0.018193, blowoutProb:0.009114,  expPayout:80,   priceLow:100,  priceHigh:135,  rating:"FAIR",      maxBid:120,  walkAway:140,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"Won R1 in 2024 — repeat narrative may inflate. -33% ROI. Only under $100." },
-  { seed:12, team:"High Point",      region:"West",    r1:.25, r2:.06, s16:.01, e8:.003,f4:.001,champ:0,   upsetEV:12, blowoutEV:0,  expPayout:70,   priceLow:100,  priceHigh:135,  rating:"AVOID",     maxBid:120,  walkAway:135,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:12, team:"High Point",      region:"West",    r1:.25, r2:.06, s16:.01, e8:.003,f4:.001,champ:0,   upsetProb:0.012995, blowoutProb:0.009494,  expPayout:70,   priceLow:100,  priceHigh:135,  rating:"AVOID",     maxBid:120,  walkAway:135,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"Hard avoid. -33% ROI." },
-  { seed:12, team:"Akron",           region:"Midwest", r1:.28, r2:.07, s16:.015,e8:.005,f4:.001,champ:0,   upsetEV:14, blowoutEV:0,  expPayout:80,   priceLow:100,  priceHigh:135,  rating:"FAIR",      maxBid:120,  walkAway:140,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:12, team:"Akron",           region:"Midwest", r1:.28, r2:.07, s16:.015,e8:.005,f4:.001,champ:0,   upsetProb:0.014554, blowoutProb:0.009114,  expPayout:80,   priceLow:100,  priceHigh:135,  rating:"FAIR",      maxBid:120,  walkAway:140,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"-33% ROI. Only if under $100." },
 
   // ── 13-SEEDS ─────────────────────────────────────────────────────────────
-  { seed:13, team:"Cal Baptist",     region:"East",    r1:.08, r2:.015,s16:.003,e8:.001,f4:0,    champ:0,   upsetEV:10, blowoutEV:0,  expPayout:35,   priceLow:75,   priceHigh:100,  rating:"AVOID",     maxBid:80,   walkAway:100,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:13, team:"Cal Baptist",     region:"East",    r1:.08, r2:.015,s16:.003,e8:.001,f4:0,    champ:0,   upsetProb:0.002079, blowoutProb:0.023291,  expPayout:35,   priceLow:75,   priceHigh:100,  rating:"AVOID",     maxBid:80,   walkAway:100,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"-75.5% ROI. Lottery ticket only." },
-  { seed:13, team:"Troy",            region:"South",   r1:.10, r2:.02, s16:.004,e8:.001,f4:0,    champ:0,   upsetEV:12, blowoutEV:0,  expPayout:42,   priceLow:75,   priceHigh:100,  rating:"FAIR",      maxBid:80,   walkAway:100,  tag:TAGS.LOTTERY,  playIn:false, bluBlood:false,
+  { seed:13, team:"Troy",            region:"South",   r1:.10, r2:.02, s16:.004,e8:.001,f4:0,    champ:0,   upsetProb:0.002599, blowoutProb:0.022785,  expPayout:42,   priceLow:75,   priceHigh:100,  rating:"FAIR",      maxBid:80,   walkAway:100,  tag:TAGS.LOTTERY,  playIn:false, bluBlood:false,
     notes:"Plays Nebraska (first-ever tourney). Marginal upset interest. Pass above $80." },
-  { seed:13, team:"Hawaii",          region:"West",    r1:.09, r2:.015,s16:.003,e8:.001,f4:0,    champ:0,   upsetEV:11, blowoutEV:0,  expPayout:38,   priceLow:75,   priceHigh:100,  rating:"FAIR",      maxBid:80,   walkAway:100,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:13, team:"Hawaii",          region:"West",    r1:.09, r2:.015,s16:.003,e8:.001,f4:0,    champ:0,   upsetProb:0.002339, blowoutProb:0.023038,  expPayout:38,   priceLow:75,   priceHigh:100,  rating:"FAIR",      maxBid:80,   walkAway:100,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"-75.5% ROI." },
-  { seed:13, team:"Hofstra",         region:"Midwest", r1:.08, r2:.015,s16:.003,e8:.001,f4:0,    champ:0,   upsetEV:10, blowoutEV:0,  expPayout:35,   priceLow:75,   priceHigh:100,  rating:"AVOID",     maxBid:80,   walkAway:100,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
+  { seed:13, team:"Hofstra",         region:"Midwest", r1:.08, r2:.015,s16:.003,e8:.001,f4:0,    champ:0,   upsetProb:0.002079, blowoutProb:0.023291,  expPayout:35,   priceLow:75,   priceHigh:100,  rating:"AVOID",     maxBid:80,   walkAway:100,  tag:TAGS.AVOID,    playIn:false, bluBlood:false,
     notes:"-75.5% ROI. Hard pass." },
 
   // ── 14-SEEDS ─────────────────────────────────────────────────────────────
-  { seed:14, team:"North Dakota St", region:"East",    r1:.05, r2:.005,s16:.001,e8:0,    f4:0,    champ:0,   upsetEV:8,  blowoutEV:15, expPayout:40,   priceLow:55,   priceHigh:70,   rating:"FAIR",      maxBid:60,   walkAway:75,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
+  { seed:14, team:"North Dakota St", region:"East",    r1:.05, r2:.005,s16:.001,e8:0,    f4:0,    champ:0,   upsetProb:0.000650,  blowoutProb:0.048101, expPayout:40,   priceLow:55,   priceHigh:70,   rating:"FAIR",      maxBid:60,   walkAway:75,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
     notes:"Blowout/upset bonus play. +0.6% 14-seed ROI = near break-even." },
-  { seed:14, team:"Penn",            region:"South",   r1:.06, r2:.008,s16:.001,e8:0,    f4:0,    champ:0,   upsetEV:9,  blowoutEV:15, expPayout:45,   priceLow:55,   priceHigh:70,   rating:"BUY",       maxBid:65,   walkAway:75,   tag:TAGS.LOTTERY,  playIn:false, bluBlood:false,
+  { seed:14, team:"Penn",            region:"South",   r1:.06, r2:.008,s16:.001,e8:0,    f4:0,    champ:0,   upsetProb:0.000780,  blowoutProb:0.047595, expPayout:45,   priceLow:55,   priceHigh:70,   rating:"BUY",       maxBid:65,   walkAway:75,   tag:TAGS.LOTTERY,  playIn:false, bluBlood:false,
     notes:"Best 14-seed. Faces Illinois (Off #1, Def #28) — ~15% upset corridor. Ivy buzz. At $55–$65, fine lottery ticket." },
-  { seed:14, team:"Kennesaw State",  region:"West",    r1:.06, r2:.005,s16:.001,e8:0,    f4:0,    champ:0,   upsetEV:9,  blowoutEV:15, expPayout:42,   priceLow:55,   priceHigh:70,   rating:"FAIR",      maxBid:60,   walkAway:75,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
+  { seed:14, team:"Kennesaw State",  region:"West",    r1:.06, r2:.005,s16:.001,e8:0,    f4:0,    champ:0,   upsetProb:0.000780,  blowoutProb:0.047595, expPayout:42,   priceLow:55,   priceHigh:70,   rating:"FAIR",      maxBid:60,   walkAway:75,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
     notes:"Blowout bonus play. +0.6% ROI at typical prices." },
-  { seed:14, team:"Wright State",    region:"Midwest", r1:.06, r2:.005,s16:.001,e8:0,    f4:0,    champ:0,   upsetEV:9,  blowoutEV:15, expPayout:42,   priceLow:55,   priceHigh:70,   rating:"FAIR",      maxBid:60,   walkAway:75,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
+  { seed:14, team:"Wright State",    region:"Midwest", r1:.06, r2:.005,s16:.001,e8:0,    f4:0,    champ:0,   upsetProb:0.000780,  blowoutProb:0.047595, expPayout:42,   priceLow:55,   priceHigh:70,   rating:"FAIR",      maxBid:60,   walkAway:75,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
     notes:"Blowout bonus play." },
 
   // ── 15-SEEDS ─────────────────────────────────────────────────────────────
-  { seed:15, team:"Furman",          region:"East",    r1:.04, r2:.003,s16:0,    e8:0,    f4:0,    champ:0,   upsetEV:6,  blowoutEV:20, expPayout:38,   priceLow:45,   priceHigh:60,   rating:"FAIR",      maxBid:50,   walkAway:60,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
+  { seed:15, team:"Furman",          region:"East",    r1:.04, r2:.003,s16:0,    e8:0,    f4:0,    champ:0,   upsetProb:0.000260,  blowoutProb:0.072911, expPayout:38,   priceLow:45,   priceHigh:60,   rating:"FAIR",      maxBid:50,   walkAway:60,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
     notes:"-100% win return historically. Blowout EV makes it near-fair at $45–$50." },
-  { seed:15, team:"Idaho",           region:"South",   r1:.03, r2:.002,s16:0,    e8:0,    f4:0,    champ:0,   upsetEV:5,  blowoutEV:22, expPayout:38,   priceLow:45,   priceHigh:60,   rating:"FAIR",      maxBid:50,   walkAway:60,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
+  { seed:15, team:"Idaho",           region:"South",   r1:.03, r2:.002,s16:0,    e8:0,    f4:0,    champ:0,   upsetProb:0.000195,  blowoutProb:0.073671, expPayout:38,   priceLow:45,   priceHigh:60,   rating:"FAIR",      maxBid:50,   walkAway:60,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
     notes:"Higher blowout EV (faces high-powered offense). Near break-even at $45." },
-  { seed:15, team:"Queens",          region:"West",    r1:.05, r2:.003,s16:0,    e8:0,    f4:0,    champ:0,   upsetEV:7,  blowoutEV:20, expPayout:42,   priceLow:45,   priceHigh:60,   rating:"FAIR",      maxBid:50,   walkAway:60,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
+  { seed:15, team:"Queens",          region:"West",    r1:.05, r2:.003,s16:0,    e8:0,    f4:0,    champ:0,   upsetProb:0.000325,  blowoutProb:0.072152, expPayout:42,   priceLow:45,   priceHigh:60,   rating:"FAIR",      maxBid:50,   walkAway:60,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
     notes:"Slightly better R1 odds. Blowout/upset play." },
-  { seed:15, team:"Tennessee State", region:"Midwest", r1:.04, r2:.002,s16:0,    e8:0,    f4:0,    champ:0,   upsetEV:6,  blowoutEV:22, expPayout:40,   priceLow:45,   priceHigh:60,   rating:"FAIR",      maxBid:50,   walkAway:60,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
+  { seed:15, team:"Tennessee State", region:"Midwest", r1:.04, r2:.002,s16:0,    e8:0,    f4:0,    champ:0,   upsetProb:0.000260,  blowoutProb:0.072911, expPayout:40,   priceLow:45,   priceHigh:60,   rating:"FAIR",      maxBid:50,   walkAway:60,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
     notes:"Blowout play. Near break-even." },
 
   // ── 16-SEEDS (BLOWOUT BONUS PLAYS) ───────────────────────────────────────
-  { seed:16, team:"Siena",           region:"East",    r1:.01, r2:0,    s16:0,    e8:0,    f4:0,    champ:0,   upsetEV:0,  blowoutEV:45, expPayout:50,   priceLow:50,   priceHigh:65,   rating:"GREAT BUY", maxBid:60,   walkAway:65,   tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
+  { seed:16, team:"Siena",           region:"East",    r1:.01, r2:0,    s16:0,    e8:0,    f4:0,    champ:0,   upsetProb:0.000013,  blowoutProb:0.100253, expPayout:50,   priceLow:50,   priceHigh:65,   rating:"GREAT BUY", maxBid:60,   walkAway:65,   tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
     notes:"PRIORITY #9. Best 16-seed. Faces Duke #1 defense = massive blowout probability. +61.2% 16-seed ROI. Target $50–$55." },
-  { seed:16, team:"Prairie View/Lehigh",region:"South",r1:.01, r2:0,    s16:0,    e8:0,    f4:0,    champ:0,   upsetEV:0,  blowoutEV:40, expPayout:45,   priceLow:45,   priceHigh:60,   rating:"BUY",       maxBid:55,   walkAway:60,   tag:TAGS.BLOWOUT,  playIn:true,  bluBlood:false,
+  { seed:16, team:"Prairie View/Lehigh",region:"South",r1:.01, r2:0,    s16:0,    e8:0,    f4:0,    champ:0,   upsetProb:0.000013,  blowoutProb:0.093987, expPayout:45,   priceLow:45,   priceHigh:60,   rating:"BUY",       maxBid:55,   walkAway:60,   tag:TAGS.BLOWOUT,  playIn:true,  bluBlood:false,
     notes:"Play-in 16-seed. Blowout bonus play. +61.2% ROI. Under $55." },
-  { seed:16, team:"LIU",             region:"West",    r1:.01, r2:0,    s16:0,    e8:0,    f4:0,    champ:0,   upsetEV:0,  blowoutEV:45, expPayout:50,   priceLow:50,   priceHigh:65,   rating:"BUY",       maxBid:55,   walkAway:65,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
+  { seed:16, team:"LIU",             region:"West",    r1:.01, r2:0,    s16:0,    e8:0,    f4:0,    champ:0,   upsetProb:0.000013,  blowoutProb:0.100253, expPayout:50,   priceLow:50,   priceHigh:65,   rating:"BUY",       maxBid:55,   walkAway:65,   tag:TAGS.BLOWOUT,  playIn:false, bluBlood:false,
     notes:"Blowout bonus play. +61.2% ROI. Buy under $60." },
-  { seed:16, team:"UMBC/Howard",     region:"Midwest", r1:.01, r2:0,    s16:0,    e8:0,    f4:0,    champ:0,   upsetEV:0,  blowoutEV:40, expPayout:45,   priceLow:45,   priceHigh:60,   rating:"BUY",       maxBid:55,   walkAway:60,   tag:TAGS.BLOWOUT,  playIn:true,  bluBlood:false,
+  { seed:16, team:"UMBC/Howard",     region:"Midwest", r1:.01, r2:0,    s16:0,    e8:0,    f4:0,    champ:0,   upsetProb:0.000013,  blowoutProb:0.093987, expPayout:45,   priceLow:45,   priceHigh:60,   rating:"BUY",       maxBid:55,   walkAway:60,   tag:TAGS.BLOWOUT,  playIn:true,  bluBlood:false,
     notes:"Play-in 16-seed. Blowout bonus play. Under $55." },
 ];
 
@@ -257,18 +257,31 @@ const INIT_COMPETITORS = [
 
 const BUDGET = 2500;
 
+// ── NORMALIZATION CONSTANTS ──────────────────────────────────────────────
+// Win probs are independent estimates; these scale them so total EV = actual pot.
+// Derived from: sum(all team r1 probs)=34.42 should be 32, etc.
+const NORM = {
+  r1:    32 / 34.42,
+  r2:    16 / 19.34,
+  s16:   8  / 10.76,
+  e8:    4  / 6.48,
+  f4:    2  / 3.59,
+  champ: 1  / 1.70,
+};
+
 function calcEV(team, pot) {
   const p = pot || POT_BASE;
-  return Math.round(
-    team.r1    * p*0.010 +
-    team.r2    * p*0.016 +
-    team.s16   * p*0.020 +
-    team.e8    * p*0.028 +
-    team.f4    * p*0.035 +
-    team.champ * p*0.042 +
-    (team.upsetEV  || 0) +
-    (team.blowoutEV|| 0)
-  );
+  const roundEV =
+    team.r1    * NORM.r1    * p*0.010 +
+    team.r2    * NORM.r2    * p*0.016 +
+    team.s16   * NORM.s16   * p*0.020 +
+    team.e8    * NORM.e8    * p*0.028 +
+    team.f4    * NORM.f4    * p*0.035 +
+    team.champ * NORM.champ * p*0.042;
+  const bonusEV =
+    (team.upsetProb   || 0) * p*0.020 +
+    (team.blowoutProb || 0) * p*0.020;
+  return Math.round(roundEV + bonusEV);
 }
 
 const RC = {
