@@ -718,29 +718,22 @@ function App() {
             {/* Priority targets */}
             <div className="card">
               <div style={{ fontSize:11,color:"#f59e0b",fontWeight:800,letterSpacing:".1em",textTransform:"uppercase",marginBottom:12 }}>🎯 Priority Targets</div>
-              {[
-                { rank:1, team:"Michigan",      seed:1,  maxBid:1200, ev:1480, note:"KenPom #2, Def #1, best region" },
-                { rank:2, team:"Vanderbilt",    seed:5,  maxBid:300,  ev:370,  note:"KenPom #11, priced as 5-seed" },
-                { rank:3, team:"Florida",       seed:1,  maxBid:1050, ev:1060, note:"Cheapest 1-seed, defending champ" },
-                { rank:4, team:"South Florida", seed:11, maxBid:175,  ev:155,  note:"+44.7% 11-seed tier" },
-                { rank:5, team:"Illinois",      seed:3,  maxBid:550,  ev:630,  note:"KenPom #7, #1 offense" },
-                { rank:6, team:"VCU",           seed:11, maxBid:160,  ev:130,  note:"Faces UNC (no Caleb Wilson)" },
-                { rank:7, team:"Tennessee",     seed:6,  maxBid:260,  ev:250,  note:"+16% 6-seed ROI, under radar" },
-                { rank:8, team:"Louisville",    seed:6,  maxBid:260,  ev:250,  note:"KenPom #19, balanced" },
-                { rank:9, team:"Siena",         seed:16, maxBid:60,   ev:50,   note:"Faces Duke → blowout bonus" },
-                { rank:10,team:"Nebraska",      seed:4,  maxBid:400,  ev:350,  note:"No brand premium, KenPom #14" },
-              ].map((t,i) => {
-                const isSold = sold.find(s => s.team.team === t.team);
-                return (
+              {adjustedTeams
+                .sort((a,b) => b.valueScore - a.valueScore)
+                .slice(0, 10)
+                .map((t, i) => {
+                  const isSold = sold.find(s => s.team.team === t.team);
+                  return (
                   <div key={t.team} style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"7px 0",borderBottom:i<9?"1px solid #141428":"none",opacity:isSold?0.4:1 }}>
                     <div style={{ display:"flex",alignItems:"center",gap:8 }}>
-                      <span style={{ fontSize:10,color:"#374151",width:14,textAlign:"right" }}>{t.rank}</span>
+                      <span style={{ fontSize:10,color:"#374151",width:14,textAlign:"right" }}>{i+1}</span>
                       <span style={{ background:"#1e3a5f",color:"#60a5fa",fontSize:10,fontWeight:800,padding:"1px 6px",borderRadius:4 }}>{t.seed}</span>
                       <div>
-                        <div style={{ fontSize:13,fontWeight:700,color: isSold?"#4b5563":"#f1f5f9" }}>
+                        <div style={{ fontSize:13,fontWeight:700,color:isSold?"#4b5563":"#f1f5f9" }}>
+                          {t.bluBlood && <span style={{ color:"#f59e0b",marginRight:3 }}>★</span>}
                           {t.team} {isSold&&<span style={{ fontSize:10,color:"#374151" }}>SOLD ${isSold.price}</span>}
                         </div>
-                        <div style={{ fontSize:10,color:"#374151" }}>{t.note}</div>
+                        <div style={{ fontSize:10,color:"#374151" }}>{t.notes?.slice(0,55)}{t.notes?.length>55?"…":""}</div>
                       </div>
                     </div>
                     <div style={{ display:"flex",alignItems:"center",gap:8 }}>
@@ -748,11 +741,11 @@ function App() {
                         <div style={{ fontSize:12,color:"#4ade80",fontWeight:700 }}>EV ${t.ev}</div>
                         <div style={{ fontSize:10,color:"#374151" }}>max ${t.maxBid}</div>
                       </div>
-                      {!isSold && <button className="bb" onClick={()=>setModal(TEAMS.find(x=>x.team===t.team))}>BID</button>}
+                      {!isSold && <button className="bb" onClick={()=>setModal(t)}>BID</button>}
                     </div>
                   </div>
-                );
-              })}
+                  );
+                })}
             </div>
 
             {/* Trap teams + strategy panels */}
