@@ -1,4 +1,4 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -302,7 +302,7 @@ function App() {
   const [modal, setModal]       = useState(null);
   const [bidAmt, setBidAmt]     = useState("");
   const [bidBuyer, setBidBuyer] = useState("Mulvey, Buss");
-  const [sort, setSort]         = useState("surplus");
+  const [sort, setSort]         = useState("valueScore");
   const [seedF, setSeedF]       = useState("all");
   const [ratingF, setRatingF]   = useState("all");
   const [search, setSearch]     = useState("");
@@ -420,16 +420,29 @@ function App() {
         const evBasedMax = Math.round(ev * 0.90);
         adj.maxBid    = Math.min(evBasedMax, Math.round(blendedHigh * 0.95));
         adj.walkAway  = Math.round(blendedHigh * 1.05);
+        // ── VALUE SCORE ──────────────────────────────────────────────────
+        // Blends two signals:
+        //   1. EV/price ratio — does the model EV justify the expected cost?
+        //   2. Historical seed ROI — how has this seed line actually performed in this pool?
+        // Formula: (ev / blendedMid) × (1 + historicalROI/100)
+        // Score = 1.0 means break-even given historical pool behavior
+        // Score > 1.0 = value buy, Score < 1.0 = overpriced relative to history
         const priceRatio = ev / blendedMid;
+        const histROI    = SEED_HIST[t.seed]?.roi || 0;
+        // Dampen the ROI multiplier so it adjusts rather than dominates
+        // Use 50% weight on historical ROI signal
+        const roiMultiplier = 1 + (histROI / 100) * 0.5;
+        const valueScore = +(priceRatio * roiMultiplier).toFixed(3);
+        // Rating thresholds calibrated to valueScore
+        // 1.0 = break-even, adjusted for the fact 1-seeds historically return 58%
         let newRating = t.rating;
-        if (priceRatio >= 1.4)       newRating = "GREAT BUY";
-        else if (priceRatio >= 1.1)  newRating = "BUY";
-        else if (priceRatio >= 0.85) newRating = "FAIR";
-        else if (priceRatio >= 0.65) newRating = "OVERPRICED";
+        if (valueScore >= 1.20)      newRating = "GREAT BUY";
+        else if (valueScore >= 0.95) newRating = "BUY";
+        else if (valueScore >= 0.72) newRating = "FAIR";
+        else if (valueScore >= 0.52) newRating = "OVERPRICED";
         else                         newRating = "AVOID";
         if (allRatios.length >= 2)   adj.rating = newRating;
-        const surplus = ev - blendedMid;
-        return { ...adj, ev, surplus };
+        return { ...adj, ev, valueScore };
       });
   }, [sold, pot]);
 
@@ -443,10 +456,10 @@ function App() {
         return true;
       })
       .sort((a, b) => {
-        if (sort === "surplus") return b.surplus - a.surplus;
-        if (sort === "ev")      return b.ev - a.ev;
-        if (sort === "seed")    return a.seed - b.seed;
-        if (sort === "maxbid")  return b.maxBid - a.maxBid;
+        if (sort === "valueScore") return b.valueScore - a.valueScore;
+        if (sort === "ev")         return b.ev - a.ev;
+        if (sort === "seed")       return a.seed - b.seed;
+        if (sort === "maxbid")     return b.maxBid - a.maxBid;
         return 0;
       });
   }, [adjustedTeams, seedF, ratingF, search, sort]);
@@ -827,7 +840,7 @@ function App() {
             </div>
             <div style={{ display:"flex",gap:5,marginLeft:"auto",alignItems:"center" }}>
               <span style={{ fontSize:10,color:"#374151",letterSpacing:".08em",textTransform:"uppercase" }}>Sort:</span>
-              {[["surplus","Surplus"],["ev","EV"],["seed","Seed"],["maxbid","Max Bid"]].map(([k,l])=>(
+              {[["valueScore","Value Score"],["ev","EV"],["seed","Seed"],["maxbid","Max Bid"]].map(([k,l])=>(
                 <button key={k} className={`sb ${sort===k?"on":""}`} onClick={()=>setSort(k)}>{l}</button>
               ))}
             </div>
@@ -857,7 +870,7 @@ function App() {
             <table style={{ width:"100%",borderCollapse:"collapse",fontSize:13 }}>
               <thead>
                 <tr style={{ background:"#0a0a1a",borderBottom:"2px solid #141428" }}>
-                  {["Seed","Team","Region","R1%","R2%","S16%","E8%","F4%","Champ%","Exp $","Price Range","Max Bid","Surplus","Rating",""].map(h=>(
+                  {["Seed","Team","Region","R1%","R2%","S16%","E8%","F4%","Champ%","Exp $","Price Range","Max Bid","Value Score","Rating",""].map(h=>(
                     <th key={h} style={{ padding:"7px 9px",textAlign:"left",fontSize:9,color:"#374151",letterSpacing:".1em",textTransform:"uppercase",fontWeight:800,whiteSpace:"nowrap" }}>{h}</th>
                   ))}
                   {showSold && <th style={{ padding:"7px 9px",textAlign:"left",fontSize:9,color:"#374151",letterSpacing:".1em",textTransform:"uppercase",fontWeight:800 }}>SOLD TO</th>}
@@ -888,8 +901,13 @@ function App() {
                       <td style={{ padding:"7px 9px",color:"#4ade80",fontWeight:800 }}>${t.ev}</td>
                       <td style={{ padding:"7px 9px",color:"#6b7280",fontSize:11,whiteSpace:"nowrap" }}>${t.priceLow}–${t.priceHigh}</td>
                       <td style={{ padding:"7px 9px",color:"#f59e0b",fontWeight:800 }}>${t.maxBid}</td>
-                      <td style={{ padding:"7px 9px",fontWeight:700,color:t.surplus>0?"#4ade80":"#ef4444" }}>
-                        {t.surplus>0?"+":""}${t.surplus}
+                      <td style={{ padding:"7px 9px",fontWeight:800,
+                        color: t.valueScore>=1.20?"#4ade80":t.valueScore>=0.95?"#2dd4bf":t.valueScore>=0.72?"#a8a29e":t.valueScore>=0.52?"#f87171":"#ef4444"
+                      }}>
+                        {t.valueScore?.toFixed(2)}
+                        <span style={{ fontSize:9,marginLeft:3,opacity:.7 }}>
+                          {t.valueScore>=1.20?"▲▲":t.valueScore>=0.95?"▲":t.valueScore>=0.72?"—":t.valueScore>=0.52?"▼":"▼▼"}
+                        </span>
                       </td>
                       <td style={{ padding:"7px 9px" }}>
                         <span style={{ background:rc.bg,border:`1px solid ${rc.border}`,color:rc.text,padding:"2px 7px",borderRadius:4,fontSize:9,fontWeight:800,letterSpacing:".05em",whiteSpace:"nowrap" }}>
