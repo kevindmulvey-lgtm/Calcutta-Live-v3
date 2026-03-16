@@ -136,7 +136,7 @@ const TEAMS = [
   // ── 6-SEEDS ──────────────────────────────────────────────────────────────
   { seed:6,  team:"Louisville",      region:"East",    r1:.84, r2:.42, s16:.18, e8:.08, f4:.03, champ:.01, upsetProb:0.021831,  blowoutProb:0.000000,  expPayout:250,  priceLow:240,  priceHigh:300,  rating:"BUY",       maxBid:260,  walkAway:275,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
     notes:"PRIORITY #10. KenPom #19, balanced Off #20/Def #25. Second straight tourney = buzz but not overheated. Faces South Florida R1. +16% 6-seed ROI. Target $240–$260." },
-  { seed:6,  team:"North Carolina",  region:"South",   r1:.82, r2:.40, s16:.16, e8:.07, f4:.025,champ:.01, upsetProb:0.021311,  blowoutProb:0.000000,  expPayout:230,  priceLow:280,  priceHigh:360,  rating:"OVERPRICED",maxBid:200,  walkAway:220,  tag:TAGS.TRAP,     playIn:false, bluBlood:true,
+  { seed:6,  team:"North Carolina",  region:"South",   r1:.70, r2:.28, s16:.10, e8:.04, f4:.015,champ:.005, upsetProb:0.021311,  blowoutProb:0.000000,  expPayout:230,  priceLow:280,  priceHigh:360,  rating:"OVERPRICED",maxBid:200,  walkAway:220,  tag:TAGS.TRAP,     playIn:false, bluBlood:true,
     notes:"TRAP #4. Star Caleb Wilson OUT (hand surgery). KenPom #29 without him. UNC brand = $300+ regardless. Walk away. Under $200 only." },
   { seed:6,  team:"Tennessee",       region:"Midwest", r1:.83, r2:.42, s16:.18, e8:.08, f4:.03, champ:.01, upsetProb:0.021571,  blowoutProb:0.000000,  expPayout:250,  priceLow:230,  priceHigh:290,  rating:"BUY",       maxBid:260,  walkAway:275,  tag:TAGS.PRIORITY, playIn:false, bluBlood:false,
     notes:"PRIORITY #7. KenPom #15, Def #15. Quiet value. Flies under radar in Midwest room. Historical 6-seed ROI +16%. Target $230–$260." },
@@ -441,7 +441,7 @@ function App() {
         else if (valueScore >= 0.72) newRating = "FAIR";
         else if (valueScore >= 0.52) newRating = "OVERPRICED";
         else                         newRating = "AVOID";
-        if (allRatios.length >= 2)   adj.rating = newRating;
+        adj.rating = newRating;  // always derived from valueScore
         return { ...adj, ev, valueScore };
       });
   }, [sold, pot]);
