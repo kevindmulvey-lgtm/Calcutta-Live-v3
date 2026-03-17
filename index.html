@@ -356,12 +356,28 @@ function App() {
   }, []);
 
   // Update pot estimate from live sold data
+  // Uses weighted projection: actual sold total + historical avg estimates for unsold teams
+  // This prevents the Phase 1 distortion where cheap early seeds drag the avg down
   useEffect(() => {
-    if (sold.length >= 8) {
-      const avg = sold.reduce((s,t) => s + t.price, 0) / sold.length;
-      const proj = Math.round(avg * 68);
-      setPot(Math.max(15000, Math.min(26000, proj)));
+    if (sold.length === 0) return;
+    // Count how many of each seed have sold
+    const soldCounts = {};
+    let soldTotal = 0;
+    sold.forEach(s => {
+      const seed = s.team.seed;
+      soldCounts[seed] = (soldCounts[seed] || 0) + 1;
+      soldTotal += s.price;
+    });
+    // Estimate remaining unsold teams using historical seed averages
+    const HIST_AVG = {1:1046,2:781,3:527,4:443,5:281,6:245,7:211,8:184,
+                      9:147,10:151,11:161,12:137,13:91,14:66,15:52,16:57};
+    let remainingEstimate = 0;
+    for (let seed = 1; seed <= 16; seed++) {
+      const remaining = 4 - (soldCounts[seed] || 0);
+      remainingEstimate += remaining * (HIST_AVG[seed] || 150);
     }
+    const proj = Math.round(soldTotal + remainingEstimate);
+    setPot(Math.max(16000, Math.min(26000, proj)));
   }, [sold]);
 
   const showToast = (msg, type="ok") => {
